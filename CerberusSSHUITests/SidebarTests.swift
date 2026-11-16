@@ -54,25 +54,33 @@ final class SidebarTests: CerberusUITestCase {
         launch()
         let selected = mainWindow.buttons["sidebar-tab-hosts"]
         wait(selected)
-        let activeContrast = try iconContrast(in: selected.screenshot())
+        // Both pictures are of the screen at this spot, not of the element: once the app is in the background its
+        // window can drop out of the accessibility tree between a check and a screenshot ("Window does not exist").
+        XCTAssertTrue(selected.isEnabled)
+        XCTAssertTrue(selected.isSelected)
+        let iconFrame = selected.frame
+        let activeContrast = try iconContrast(onScreenAt: iconFrame)
 
         XCUIApplication(bundleIdentifier: "com.apple.finder").activate()
         defer { app.activate() }
         eventually("the app did not become inactive") { self.app.state == .runningBackground }
+        Thread.sleep(forTimeInterval: 0.5)  // let the window finish redrawing as inactive
 
-        XCTAssertTrue(selected.isEnabled)
-        XCTAssertTrue(selected.isSelected)
-        XCTAssertLessThan(try iconContrast(in: selected.screenshot()), activeContrast * 0.8)
+        XCTAssertLessThan(try iconContrast(onScreenAt: iconFrame), activeContrast * 0.8)
 
-        let attachment = XCTAttachment(screenshot: mainWindow.screenshot())
+        let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         attachment.name = "sidebar-navigator-inactive"
         attachment.lifetime = .keepAlways
         add(attachment)
     }
 
-    /// Sample the icon and its flat highlight, excluding the glass rim.
-    private func iconContrast(in screenshot: XCUIScreenshot) throws -> CGFloat {
-        let image = try XCTUnwrap(NSBitmapImageRep(data: screenshot.pngRepresentation))
+    /// Sample the icon and its flat highlight, excluding the glass rim, in the part of the screen the icon is at.
+    private func iconContrast(onScreenAt frame: CGRect) throws -> CGFloat {
+        let screenshot = XCUIScreen.main.screenshot()
+        let whole = try XCTUnwrap(NSBitmapImageRep(data: screenshot.pngRepresentation))
+        let scale = CGFloat(whole.pixelsWide) / screenshot.image.size.width
+        let area = CGRect(x: frame.minX * scale, y: frame.minY * scale, width: frame.width * scale, height: frame.height * scale)
+        let image = try XCTUnwrap(whole.cgImage?.cropping(to: area).map(NSBitmapImageRep.init(cgImage:)))
         var darkest: CGFloat = 1
         var lightest: CGFloat = 0
         for y in (image.pixelsHigh / 4)..<(image.pixelsHigh * 3 / 4) {

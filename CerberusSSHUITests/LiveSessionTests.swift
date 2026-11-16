@@ -47,10 +47,16 @@ final class LiveSessionTests: CerberusUITestCase {
         wait(tab("live-2"))
         eventually("expected two sessions on the server") { server!.liveSessions() == 2 }
 
+        // The tab bar says which tab is selected (the toolbar no longer repeats its name as a title).
+        eventually("the last tab to open was not the selected one") { self.isSelectedTab("live-2") && !self.isSelectedTab("live-1") }
         app.typeKey("1", modifierFlags: .command)
-        wait(mainWindow.staticTexts.matching(NSPredicate(format: "value == 'live-1'")).firstMatch, "⌘1 did not select the first tab")
+        eventually("⌘1 did not select the first tab") { self.isSelectedTab("live-1") && !self.isSelectedTab("live-2") }
         app.typeKey("2", modifierFlags: .command)
-        wait(mainWindow.staticTexts.matching(NSPredicate(format: "value == 'live-2'")).firstMatch, "⌘2 did not select the second tab")
+        eventually("⌘2 did not select the second tab") { self.isSelectedTab("live-2") && !self.isSelectedTab("live-1") }
+        app.typeKey("1", modifierFlags: .command)
+        eventually("⌘1 did not go back to the first tab") { self.isSelectedTab("live-1") }
+        app.typeKey("9", modifierFlags: .command)
+        eventually("⌘9 did not select the last tab") { self.isSelectedTab("live-2") && !self.isSelectedTab("live-1") }
 
         app.typeKey("w", modifierFlags: .command)
         waitGone(tab("live-2"))

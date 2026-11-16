@@ -293,6 +293,9 @@ struct TabButton: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
+        // The trait alone is read as "selected" for every tab by the accessibility API's clients (the UI tests see
+        // both as selected), so the state is also said in words.
+        .accessibilityValue(isSelected ? "selected" : "")
     }
 
     private func finishRenaming(save: Bool) {

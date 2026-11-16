@@ -16,6 +16,12 @@ extension CerberusUITestCase {
         mainWindow.buttons[panes > 1 ? "\(host), \(panes), Close tab" : "\(host), Close tab"]
     }
 
+    /// Is this host's tab the selected one? The tab says so in its accessibility value; its `isSelected` trait is
+    /// read as true for every tab.
+    func isSelectedTab(_ host: String, panes: Int = 1) -> Bool {
+        (tab(host, panes: panes).value as? String) == "selected"
+    }
+
     /// Has the app connect these hosts before the test starts (set before `launch()`), and, after it,
     /// waits until each says connected. For tests about what happens with a connection, not about
     /// making one: a double-click and the wait for it cost a few seconds each.
