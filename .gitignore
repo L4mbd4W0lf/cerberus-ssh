@@ -1,0 +1,16 @@
+.DS_Store
+
+# Xcode
+xcuserdata/
+DerivedData/
+*.xcuserstate
+
+# SwiftPM and build output
+.build/
+.swiftpm/
+build/
+
+*.profraw
+
+# Private project documentation is kept outside this repository.
+/docs/

@@ -1,0 +1,9 @@
+CerberusSSH
+Copyright 2026 Adrian Hall
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+It includes software developed by others, under their own licences, listed with
+the required notices in THIRD_PARTY_NOTICES.md. It includes a modified copy of
+swift-nio-ssh (Copyright Apple Inc. and the SwiftNIO project authors, Apache
+License 2.0); the changes are described in THIRD_PARTY_NOTICES.md.
