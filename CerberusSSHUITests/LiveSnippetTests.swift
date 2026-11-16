@@ -2,7 +2,10 @@ import XCTest
 
 /// The snippet palette (⇧⌘K, spec §9.4), checked by what each remote shell does with what it is sent.
 final class LiveSnippetTests: CerberusUITestCase {
-    private var log: URL { server!.scratchDirectory.appendingPathComponent("snippet.txt") }
+    /// Each test writes to files of its own. The scratch folder outlives a test, and the test cannot remove what the
+    /// remote shell wrote there (the runner is sandboxed), so a name shared with an earlier test would still hold its lines.
+    private let runID = UUID().uuidString
+    private var log: URL { server!.scratchDirectory.appendingPathComponent("snippet-\(runID).txt") }
 
     private func lines(of url: URL) -> [String] {
         ((try? String(contentsOf: url, encoding: .utf8)) ?? "").split(separator: "\n").map(String.init)
@@ -46,8 +49,8 @@ final class LiveSnippetTests: CerberusUITestCase {
 
     @MainActor func testChoosingPanesSendsOnlyToThosePanes() throws {
         try startServer()
-        let left = server!.scratchDirectory.appendingPathComponent("snippet-left.pid")
-        let right = server!.scratchDirectory.appendingPathComponent("snippet-right.pid")
+        let left = server!.scratchDirectory.appendingPathComponent("snippet-left-\(runID).pid")
+        let right = server!.scratchDirectory.appendingPathComponent("snippet-right-\(runID).pid")
         for url in [log, left, right] { try? FileManager.default.removeItem(at: url) }
         options.snippets = [(title: "Mark pid", body: "echo $$ >> \(log.path)")]
         launchConnected("live-1")
