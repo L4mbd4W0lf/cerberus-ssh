@@ -238,7 +238,7 @@ struct WorkspaceMemory: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .onAppear { QuitTimer.app = app }
+            .onAppear { AppDelegate.app = app }
             .onChange(of: app.workspaceSnapshot()) { app.scheduleWorkspaceSave() }
             .task {
                 guard !isTerminalWindow else { return }

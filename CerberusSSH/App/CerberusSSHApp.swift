@@ -16,11 +16,16 @@ private struct WindowRoot: View {
 enum HelpWindow { static let id = "help" }
 enum ForwardsWindowID { static let id = "forwards" }
 
-/// Times how long quitting takes, in the log, so a slow quit can be found rather than guessed at.
-final class QuitTimer: NSObject, NSApplicationDelegate {
+/// The app's delegate: turns off window tabbing, asks before quitting with live connections, and times how long
+/// quitting takes, in the log, so a slow quit can be found rather than guessed at.
+final class AppDelegate: NSObject, NSApplicationDelegate {
     nonisolated(unsafe) static var asked: ContinuousClock.Instant?
     /// The model, for the question asked before quitting with live connections (set by the first window).
     nonisolated(unsafe) static weak var app: AppModel?
+
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        NSWindow.allowsAutomaticWindowTabbing = false
+    }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         // Quitting ends every connection: ask first when there are some (Settings ▸ Behaviour).
@@ -50,16 +55,11 @@ final class QuitTimer: NSObject, NSApplicationDelegate {
     }
 }
 
-class AppDelegate: NSObject, NSApplicationDelegate {
-    func applicationWillFinishLaunching(_ notification: Notification) {
-        NSWindow.allowsAutomaticWindowTabbing = false
-    }
-}
-
 @main
 struct CerberusSSHApp: App {
-    @NSApplicationDelegateAdaptor(QuitTimer.self) private var quitTimer
-    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    // Keep this the only @NSApplicationDelegateAdaptor: SwiftUI honours just one, and a second silently switches off
+    // the other's methods (a second delegate once disabled the quit confirmation). Put new delegate methods in AppDelegate.
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     /// Local-only store. Nothing is written to iCloud until the user opts in (spec §11.1).
     private let modelContainer: ModelContainer
