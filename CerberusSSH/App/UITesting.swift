@@ -52,7 +52,7 @@ enum UITesting {
         var migrationBackups: [String] = []
         /// Snippets to have saved, as (title, body).
         var snippets: [(title: String, body: String)] = []
-        /// The performance gate (Scripts/perf-gate.sh): many sessions at once, each flooding the screen.
+        /// The performance gate: many sessions at once, each flooding the screen.
         var perf: PerfPlan?
 
         struct PerfPlan {

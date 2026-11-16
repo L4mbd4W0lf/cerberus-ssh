@@ -173,12 +173,12 @@ class CerberusUITestCase: XCTestCase {
     func startServer(trusted: Bool = true) throws { try startServer(hostKey: trusted ? .trusted : .unknown) }
 
     /// Points the seeded `live-*` hosts at the throwaway `sshd` that the scheme's pre-action started
-    /// (`Scripts/uitest-sshd.sh`). `.unknown` leaves the server's host key unknown to the app, so the
+    /// (the test-sshd script). `.unknown` leaves the server's host key unknown to the app, so the
     /// host-key sheet appears; `.mismatched` pins a different key, so connecting meets a changed one.
     /// Skips the test, saying why, if there is no server (the tests were run without the shared scheme).
     func startServer(hostKey: HostKeyState) throws {
         guard let found = SharedApp.server else {
-            throw XCTSkip("no test sshd: run through the CerberusSSH scheme (it starts one with Scripts/uitest-sshd.sh)")
+            throw XCTSkip("no test sshd: run through the CerberusSSH scheme (it starts one before the tests)")
         }
         server = found
         options.seed = switch hostKey { case .trusted: "live"; case .unknown: "live-untrusted"; case .mismatched: "live-mismatch" }

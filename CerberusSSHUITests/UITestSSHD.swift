@@ -4,7 +4,7 @@ import Darwin
 /// The throwaway `sshd` the live UI tests connect to.
 ///
 /// A UI-test bundle runs in a sandbox that may not listen on a port, and neither may anything it
-/// starts, so the server is started from outside by `Scripts/uitest-sshd.sh`, which the shared
+/// starts, so the server is started from outside by the test-sshd script, which the shared
 /// scheme runs before the tests and after them. This reads what the script left behind.
 final class UITestSSHD {
     static let directory = URL(fileURLWithPath: "/tmp/cerberus-uitest-sshd")

@@ -1,6 +1,6 @@
 import XCTest
 
-/// Tests that connect to a real `sshd` (see `Scripts/uitest-sshd.sh`): what the sidebar, tabs and
+/// Tests that connect to a real `sshd` (started by the scheme): what the sidebar, tabs and
 /// status bar show, that closing really ends the connection on the server, and that typing reaches
 /// the remote shell. They skip themselves when there is no test server.
 final class LiveSessionTests: CerberusUITestCase {
