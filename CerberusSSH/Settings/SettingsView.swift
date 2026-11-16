@@ -46,8 +46,36 @@ enum SettingsTab: String, CaseIterable, Identifiable, Equatable {
     }
 }
 
+/// Keeps the Settings sidebar from being collapsed. SwiftUI sets the sidebar item's `canCollapse` back to `true` when
+/// the chosen category changes (after a one-time lock has been made), so the lock is watched and put back each time.
+@MainActor
+private final class SidebarLock {
+    private var observations: [NSKeyValueObservation] = []
+
+    private static func forbidCollapsing(_ item: NSSplitViewItem) {
+        if item.canCollapse { item.canCollapse = false }
+        if item.canCollapseFromWindowResize { item.canCollapseFromWindowResize = false }
+    }
+
+    func lock(_ item: NSSplitViewItem, width: CGFloat) {
+        Self.forbidCollapsing(item)
+        item.minimumThickness = width
+        item.maximumThickness = width
+        // AppKit changes these on the main thread, which is where the item lives.
+        nonisolated(unsafe) let target = item
+        let watch: @Sendable (NSSplitViewItem, NSKeyValueObservedChange<Bool>) -> Void = { _, _ in
+            MainActor.assumeIsolated { SidebarLock.forbidCollapsing(target) }
+        }
+        observations = [
+            item.observe(\.canCollapse, changeHandler: watch),
+            item.observe(\.canCollapseFromWindowResize, changeHandler: watch),
+        ]
+    }
+}
+
 struct SettingsView: View {
     @Environment(AppModel.self) private var app
+    @State private var sidebarLock = SidebarLock()
 
     private var sidebarWidth: CGFloat = 160
     /// The list wants an optional selection; there is always one category chosen.
@@ -108,11 +136,7 @@ struct SettingsView: View {
         guard let delegate = splitView.delegate as? NSSplitViewController,
             let sidebarItem = delegate.splitViewItems.first
         else { return }
-        sidebarItem.canCollapse = false
-        sidebarItem.canCollapseFromWindowResize = false
-
-        sidebarItem.minimumThickness = sidebarWidth
-        sidebarItem.maximumThickness = sidebarWidth
+        sidebarLock.lock(sidebarItem, width: sidebarWidth)
     }
 
     private func findSplitView(in view: NSView?) -> NSSplitView? {
