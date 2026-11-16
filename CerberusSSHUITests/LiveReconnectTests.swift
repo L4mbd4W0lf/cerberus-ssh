@@ -36,7 +36,8 @@ final class LiveReconnectTests: CerberusUITestCase {
         XCTAssertEqual(server!.liveSessions(), 0, "a host not set to reconnect reconnected anyway")
         XCTAssertFalse(connectedRow("live-1").exists)
 
-        let reconnect = mainWindow.buttons["Reconnect"]
+        // The one in the pane; the toolbar has a Reconnect button of its own.
+        let reconnect = mainWindow.groups.buttons["Reconnect"]
         wait(reconnect, "no Reconnect button for a lost connection")
         reconnect.click()
         wait(connectedRow("live-1"), "Reconnect did not bring the session back", timeout: 20)

@@ -68,7 +68,8 @@ final class LiveTerminalExtrasTests: CerberusUITestCase {
         XCTAssertFalse(screen.contains("SCROLLBACK_NEEDLE"), "the needle is still on the screen, so this does not test scrollback")
 
         app.typeKey("f", modifierFlags: .command)
-        let field = mainWindow.searchFields.firstMatch
+        // Not the toolbar's quick-connect field, which is a search field too.
+        let field = mainWindow.searchFields.matching(NSPredicate(format: "identifier != 'quick-connect-field'")).firstMatch
         wait(field, "⌘F did not open a find field")
         field.typeText("SCROLLBACK_NEEDLE\n")
         eventually("the search did not bring the needle into view") { screen.contains("SCROLLBACK_NEEDLE") }

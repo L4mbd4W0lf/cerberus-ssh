@@ -19,6 +19,8 @@ enum UITestControl {
         #if DEBUG || PERFGATE
         guard UITesting.isActive, !started, let path = ProcessInfo.processInfo.environment["CERBERUS_UI_COMMAND"] else { return }
         started = true
+        // The tests read what a terminal shows through the accessibility tree; no other mode lets them.
+        TerminalUITestSupport.exposesScreenText = true
         Task { @MainActor in
             var lastID = 0
             while true {

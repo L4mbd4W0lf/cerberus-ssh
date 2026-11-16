@@ -195,7 +195,8 @@ final class FilesTests: CerberusUITestCase {
         wait(pane("right"))
 
         pane("right").rightClick()
-        let new = app.menuItems["New Folder…"]
+        // The list's context menu; the File menu has a New Folder… item of its own (for the sidebar).
+        let new = pane("right").menuItems["New Folder…"]
         wait(new); new.click()
         let field = app.textFields["files-name-field"]
         wait(field); field.click(); field.typeText(made); app.buttons["files-name-confirm"].click()
@@ -366,7 +367,10 @@ final class FilesTests: CerberusUITestCase {
         XCTAssertEqual(try? fm.destinationOfSymbolicLink(atPath: hostFolder("web-1") + "/\(link)"), target)
     }
 
-    @MainActor func testFinderStyleKeysNewFolderRenameDeleteRefreshAndOpen() {
+    @MainActor func testFinderStyleKeysNewFolderRenameDeleteRefreshAndOpen() throws {
+        // ⌘↓ is sent as a real keyboard event (see `pressCommandDown`), which macOS drops unless the test runner may post
+        // events (System Settings ▸ Privacy & Security ▸ Accessibility). Without that, the key never reaches the app.
+        try XCTSkipUnless(CGPreflightPostEventAccess(), "the test runner is not allowed to post keyboard events")
         let made = unique("keys")
         let renamed = unique("keyed")
         let inside = unique("inside") + ".txt"
