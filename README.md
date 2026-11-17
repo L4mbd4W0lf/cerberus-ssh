@@ -2,7 +2,7 @@
 
 A native macOS SSH client, written in Swift and SwiftUI. It keeps everything on your Mac: your hosts, saved logins and keys are stored locally and sealed with a key held in the Keychain, and there is an encrypted backup you control. There is no account, no cloud service and no telemetry.
 
-> **Status: pre-release (0.3.0).** It works and is used against real servers, but it has not been notarised yet, and some features are missing (see [What is not built](#what-is-not-built)).
+> **Status: pre-release (0.3.1).** It works and is used against real servers, but it has not been notarised yet, and some features are missing (see [What is not built](#what-is-not-built)).
 
 **Who it is for:** advanced computer users, people who already know SSH and work quickly. It favours speed and the keyboard over hand-holding.
 
@@ -73,7 +73,7 @@ The detailed specification and project notes are private and kept outside this r
 
 ## Security
 
-Secrets are sealed with AES-GCM under a data key kept in the Keychain (this device only), and zeroed after use. Revealing or replacing a secret can require Touch ID or your password (a setting). Backups are sealed with a passphrase you choose; there is no escrow, so a forgotten passphrase cannot be recovered. If you find a security problem, please report it privately to the repository owner rather than opening a public issue.
+Secrets are sealed with AES-GCM under a data key kept in the Keychain (this device only), and zeroed after use. Revealing or replacing a secret can require Touch ID or your password (a setting). Backups are sealed with a passphrase you choose; there is no escrow, so a forgotten passphrase cannot be recovered. If you find a security problem, please report it privately, as [`SECURITY.md`](SECURITY.md) describes.
 
 ## Licence
 
