@@ -38,6 +38,7 @@ struct ContentView: View {
     /// left, and shared by every window.
     @AppStorage("sidebarCollapsedGroups") private var collapsedStorage = ""
     @AppStorage(BehaviourSettings.hostOrderKey) private var hostOrder = HostSortOrder.default
+    @AppStorage(BehaviourSettings.collapseSubfoldersKey) private var collapsesSubfolders = true
     private var collapsedFolders: Binding<Set<UUID>> {
         Binding(
             get: { CollapsedFolders.decode(collapsedStorage) },
@@ -54,7 +55,6 @@ struct ContentView: View {
     @State private var folderEditor: FolderEditorRequest?
     @State private var folderPendingDeletion: TreeNode?
     /// A dragged row is over the empty space below the tree (Custom Order).
-    @State private var isTargetedAtRoot = false
     @State private var dropIndicator = SidebarDropIndicator()
 
     var body: some View {
@@ -361,7 +361,7 @@ struct ContentView: View {
         // Compact rows, so the list reads like a file browser.
         .environment(\.sidebarRowSize, .small)
         // The empty space below the rows takes a dragged row to the end of the top level.
-        .onDrop(of: [.sidebarNode], delegate: RootDropDelegate(reordering: reordering, isTargeted: $isTargetedAtRoot))
+        .onDrop(of: [.sidebarNode], delegate: RootDropDelegate(reordering: reordering))
         .overlay { sidebarEmptyState }
         .focusedValue(\.sidebarActions, sidebarActions)
         .background(SidebarMarker(restoreKeyboardFocus: $sidebarRestoresFocus))
@@ -377,6 +377,7 @@ struct ContentView: View {
             sidebarContextMenu(ids)
         } primaryAction: { ids in
             for host in hosts where ids.contains(host.id) { connect(host) }
+            if ids.count == 1, let id = ids.first { toggleFolder(id) }
         }
         // Reusing the outline across tree/flat content can leave old disclosure rows drawn after
         // a multi-selection tab switch. Recreate it and its marker, not the shared controls or state.
@@ -397,7 +398,7 @@ struct ContentView: View {
                 sessions: app.sessions,
                 reordering: reordering
             )
-            if isTargetedAtRoot && reordering != nil {
+            if dropIndicator.isAtEnd && reordering != nil {
                 DropIndicatorLine()
                     .listRowInsets(EdgeInsets(top: 0, leading: 8, bottom: 0, trailing: 8))
                     .listRowSeparator(.hidden)
@@ -512,6 +513,30 @@ struct ContentView: View {
         guard tab != sidebarTab else { return }
         sidebarRestoresFocus = sidebarKeys.hasKeyboard
         sidebarTab = tab
+    }
+
+    /// A double click on a folder's row opens or closes it. Nothing while searching: every folder with a match
+    /// is then open.
+    private func toggleFolder(_ id: UUID) {
+        guard sidebarTab == .hosts, searchQuery.isEmpty, let row = treeRow(id, in: tree), row.node.isFolder else { return }
+        var collapsed = collapsedFolders.wrappedValue
+        if collapsed.contains(id) {
+            collapsed.remove(id)
+        } else {
+            collapsed.insert(id)
+            // Closing a folder also closes the folders inside it (Settings ▸ Behaviour), so opening it again
+            // shows them closed.
+            if collapsesSubfolders { collapsed.formUnion(row.descendantFolderIDs) }
+        }
+        collapsedFolders.wrappedValue = collapsed
+    }
+
+    private func treeRow(_ id: UUID, in rows: [NodeTree.Row]) -> NodeTree.Row? {
+        for row in rows {
+            if row.id == id { return row }
+            if let found = treeRow(id, in: row.children) { return found }
+        }
+        return nil
     }
 
     private func revealCreatedItems(_ ids: Set<UUID>) {

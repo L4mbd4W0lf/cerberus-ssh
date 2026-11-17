@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 import UniformTypeIdentifiers
 import CerberusModels
 
@@ -21,9 +22,14 @@ struct DraggedRows: Codable, Transferable {
     }
 }
 
-/// Where the drop indicator is drawn. One for the whole sidebar, so that "above this row" and "below the row
-/// before it", which are the same place, draw the same line: it is always the bottom edge of the row before the
-/// gap, or the top edge of the first row.
+/// Where the drop indicator is drawn, and what a drop there does. One for the whole sidebar, so that "above
+/// this row" and "below the row before it", which are the same place, draw the same line: it is always the
+/// bottom edge of the row before the gap, or the top edge of the first row.
+///
+/// The rows' drop areas sit inside the list's own, for the space below the rows. macOS 26 can tell both of
+/// them about the same drag, deliver the drop to either, and leave out the exits, so neither drop area
+/// trusts its own callbacks: whichever drew last says what the drop does, any drop clears everything, and so
+/// does the first click, key or mouse move after a drag that ended without one.
 @MainActor @Observable
 final class SidebarDropIndicator {
     enum Mark: Equatable {
@@ -35,20 +41,77 @@ final class SidebarDropIndicator {
         case box(UUID)
     }
 
-    private(set) var mark: Mark?
-    private var owner: UUID?
+    typealias Drop = @MainActor (_ draggedIDs: [UUID]) -> Void
 
-    /// `row` is the one the pointer is over.
-    func show(_ mark: Mark?, for row: UUID) {
+    private(set) var mark: Mark?
+    /// The line in the empty space below the rows: a drop goes to the end of the top level.
+    private(set) var isAtEnd = false
+    @ObservationIgnored private var owner: UUID?
+    @ObservationIgnored private var drop: Drop?
+    @ObservationIgnored private var lastRowUpdate: ContinuousClock.Instant?
+    @ObservationIgnored private var monitor: Any?
+
+    /// `row` is the one the pointer is over; `drop` is what a drop now does.
+    func show(_ mark: Mark, for row: UUID, drop: @escaping Drop) {
         owner = row
+        self.drop = drop
+        lastRowUpdate = .now
         if self.mark != mark { self.mark = mark }
+        if isAtEnd { isAtEnd = false }
+        watchForDragEnd()
+    }
+
+    /// The pointer is over the space below the rows. Over a row the list hears the drag too, so the row,
+    /// while it is still hearing it, wins.
+    func showAtEnd(drop: @escaping Drop) {
+        if let lastRowUpdate, ContinuousClock.now - lastRowUpdate < .milliseconds(150) { return }
+        owner = nil
+        self.drop = drop
+        if mark != nil { mark = nil }
+        if !isAtEnd { isAtEnd = true }
+        watchForDragEnd()
     }
 
     /// The pointer left `row`. Only clears what `row` drew: the row it moved to may already have drawn its own.
     func clear(for row: UUID) {
         guard owner == row else { return }
+        reset()
+    }
+
+    /// The pointer left the space below the rows.
+    func clearAtEnd() {
+        guard isAtEnd else { return }
+        reset()
+    }
+
+    /// What the drop does, for the last place drawn, and clears everything. Nil when nothing was drawn, or
+    /// when another drop area already took it.
+    func takeDrop() -> Drop? {
+        let drop = drop
+        reset()
+        return drop
+    }
+
+    func reset() {
         owner = nil
-        mark = nil
+        drop = nil
+        lastRowUpdate = nil
+        if mark != nil { mark = nil }
+        if isAtEnd { isAtEnd = false }
+        if let monitor { NSEvent.removeMonitor(monitor) }
+        monitor = nil
+    }
+
+    /// A drag that ends anywhere but a drop area tells no one. The window sees none of these events while
+    /// the drag goes on, so the first one means it is over.
+    private func watchForDragEnd() {
+        guard monitor == nil else { return }
+        monitor = NSEvent.addLocalMonitorForEvents(
+            matching: [.mouseMoved, .leftMouseDown, .rightMouseDown, .keyDown, .scrollWheel]
+        ) { [weak self] event in
+            MainActor.assumeIsolated { self?.reset() }
+            return event
+        }
     }
 }
 
@@ -116,16 +179,15 @@ struct TreeDropDelegate: DropDelegate {
         guard let reordering else { return nil }
         let position = position(at: info)
         let row = target.rowID
-        switch position {
-        case .inside:
-            reordering.indicator.show(.box(row), for: row)
-        case .below:
-            reordering.indicator.show(.lineBelow(row), for: row)
-        case .above:
-            // The gap above this row is the gap below the one before it.
-            let mark = reordering.rowAbove(row).map { SidebarDropIndicator.Mark.lineBelow($0) } ?? .lineAbove(row)
-            reordering.indicator.show(mark, for: row)
+        let mark: SidebarDropIndicator.Mark = switch position {
+        case .inside: .box(row)
+        case .below: .lineBelow(row)
+        // The gap above this row is the gap below the one before it.
+        case .above: reordering.rowAbove(row).map { .lineBelow($0) } ?? .lineAbove(row)
         }
+        let target = target
+        let isOpen = !isCollapsed
+        reordering.indicator.show(mark, for: row) { reordering.move($0, target, position, isOpen) }
         if position == .inside && isCollapsed {
             hoverController.scheduleExpansion(expand)
         } else {
@@ -140,38 +202,33 @@ struct TreeDropDelegate: DropDelegate {
     }
 
     func performDrop(info: DropInfo) -> Bool {
-        let position = position(at: info)
         hoverController.cancel()
-        guard let reordering else { return false }
-        reordering.indicator.clear(for: target.rowID)
-        let target = target
-        let isOpen = !isCollapsed
-        return loadDraggedID(from: info) { reordering.move($0, target, position, isOpen) }
+        // The place drawn last, which may be the space below the rows (see SidebarDropIndicator).
+        guard let drop = reordering?.indicator.takeDrop() else { return false }
+        return loadDraggedID(from: info, then: drop)
     }
 }
 
 /// A drop in the empty space below the last row: the row goes to the end of the top level.
 struct RootDropDelegate: DropDelegate {
     let reordering: SidebarReordering?
-    @Binding var isTargeted: Bool
 
     func validateDrop(info: DropInfo) -> Bool {
         reordering != nil && info.hasItemsConforming(to: [.sidebarNode])
     }
 
-    func dropEntered(info: DropInfo) { isTargeted = true }
-
     func dropUpdated(info: DropInfo) -> DropProposal? {
-        isTargeted = true
+        guard let reordering else { return nil }
+        reordering.indicator.showAtEnd { reordering.moveToTopLevel($0) }
         return DropProposal(operation: .move)
     }
 
-    func dropExited(info: DropInfo) { isTargeted = false }
+    func dropExited(info: DropInfo) { reordering?.indicator.clearAtEnd() }
 
     func performDrop(info: DropInfo) -> Bool {
-        isTargeted = false
-        guard let reordering else { return false }
-        return loadDraggedID(from: info) { reordering.moveToTopLevel($0) }
+        // The place drawn last, which may be a row (see SidebarDropIndicator).
+        guard let drop = reordering?.indicator.takeDrop() else { return false }
+        return loadDraggedID(from: info, then: drop)
     }
 }
 

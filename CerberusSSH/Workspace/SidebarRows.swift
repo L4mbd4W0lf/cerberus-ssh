@@ -11,7 +11,6 @@ struct NodeRows: View {
     let rows: [NodeTree.Row]
     let selection: Set<UUID>
     @Environment(\.controlActiveState) private var activeState
-    @AppStorage(BehaviourSettings.collapseSubfoldersKey) private var collapsesSubfolders = true
     @Binding var collapsed: Set<UUID>
     let sessions: [SessionViewModel]
     /// What a drop does; nil unless the sidebar is in Custom Order and shows the whole tree.
@@ -50,18 +49,8 @@ struct NodeRows: View {
                 }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
-                    // Simultaneous, so the first click selects at once instead of waiting
-                    // to see whether a second one follows.
-                    .simultaneousGesture(TapGesture(count: 2).onEnded {
-                        if collapsed.contains(id) {
-                            collapsed.remove(id)
-                        } else {
-                            collapsed.insert(id)
-                            // Closing a folder also closes the folders inside it (Settings ▸ Behaviour),
-                            // so opening it again shows them closed.
-                            if collapsesSubfolders { collapsed.formUnion(row.descendantFolderIDs) }
-                        }
-                    })
+                    // A double click opens or closes the folder through the list's primary action, not a
+                    // tap gesture here: on macOS 26 one takes the mouse down, and the row cannot be dragged.
                     // Open for a dragged row that waits over it.
                     .reorderable(node, selection: selection, isCollapsed: collapsed.contains(id), reordering: reordering) {
                         collapsed.remove(id)
