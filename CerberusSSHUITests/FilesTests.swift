@@ -99,6 +99,28 @@ final class FilesTests: CerberusUITestCase {
         XCTAssertFalse(row(theirs, in: "left").exists, "a file of the host showed in This Mac's pane")
     }
 
+    /// A click on the path field leaves the keyboard there, in the focused pane and in the other one: a click in a pane
+    /// gives its list the keyboard, which used to take it straight back from the field, so a typed path went to the list.
+    @MainActor func testATypedPathIsGoneTo() {
+        let mine = unique("typed-here")
+        let theirs = unique("typed-there")
+        put("a", at: testHome.appendingPathComponent("\(mine)/inside-mine").path)
+        put("b", at: hostFolder("web-1") + "/\(theirs)/inside-theirs")
+        launch()
+        openFiles(for: "web-1")
+
+        for (side, folder, file) in [("left", testHome.appendingPathComponent(mine).path, "inside-mine"),
+                                     ("right", hostFolder("web-1") + "/\(theirs)", "inside-theirs")] {
+            let field = app.textFields["files-path-\(side)"]
+            wait(field)
+            field.click()
+            XCTAssertTrue((field.value(forKey: "hasKeyboardFocus") as? Bool) == true, "the \(side) path field lost the keyboard after a click")
+            app.typeKey("a", modifierFlags: .command)
+            app.typeText(folder + "\n")
+            wait(row(file, in: side), "the \(side) pane did not go to the typed path")
+        }
+    }
+
     @MainActor func testCopyToTheHostAndBack() {
         let up = unique("up") + ".txt"
         let down = unique("down") + ".txt"

@@ -24,6 +24,8 @@ struct FilePaneView: View {
     /// The list has the keyboard. Kept in step with ``FileTabModel/focusedSide``: clicking a pane focuses it, and
     /// moving the focus with the keys puts the keyboard in the pane that gets it.
     @FocusState private var listFocused: Bool
+    /// The path field has the keyboard: a click on it focuses the pane but must not hand the keyboard to the list.
+    @FocusState private var pathFocused: Bool
     private var isFocusedPane: Bool { tab.focusedSide == side }
 
     var body: some View {
@@ -42,10 +44,12 @@ struct FilePaneView: View {
         .overlay { if isDropTarget { RoundedRectangle(cornerRadius: 4).strokeBorder(Color.accentColor, lineWidth: 3).allowsHitTesting(false) } }
         // The pane that ⌘C, ⌘V and the keys act on, outlined as the focused pane of an SSH tab is.
         .overlay { if isFocusedPane { Rectangle().strokeBorder(Color.accentColor.opacity(0.8), lineWidth: 2).allowsHitTesting(false) } }
-        // A click anywhere in the pane (its header, the empty part of the list) focuses it.
-        .simultaneousGesture(TapGesture().onEnded { tab.focus(side); listFocused = true })
+        // A click anywhere in the pane (its header, the empty part of the list) focuses it, and gives the list the
+        // keyboard unless the click was on the path field.
+        .simultaneousGesture(TapGesture().onEnded { tab.focus(side); if !pathFocused { listFocused = true } })
         .onChange(of: listFocused) { _, focused in if focused { tab.focus(side) } }
-        .onChange(of: tab.focusedSide) { _, focusedSide in if focusedSide == side { listFocused = true } }
+        .onChange(of: pathFocused) { _, focused in if focused { tab.focus(side) } }
+        .onChange(of: tab.focusedSide) { _, focusedSide in if focusedSide == side, !pathFocused { listFocused = true } }
         // One destination for everything: two stacked `dropDestination`s leave only one of them working.
         // Not `.item`: accepting any file type makes the system fetch the file a dragged row offers for
         // Finder as soon as it is dropped, which for a file on a server downloads it to this Mac.
@@ -129,6 +133,7 @@ struct FilePaneView: View {
                 .accessibilityLabel("Enclosing folder").accessibilityIdentifier("files-up-\(side)")
             TextField("Path", text: $pathText)
                 .textFieldStyle(.roundedBorder).font(.system(.body, design: .monospaced))
+                .focused($pathFocused)
                 .onSubmit { Task { await pane.go(to: pathText) } }
                 .accessibilityIdentifier("files-path-\(side)")
             Button { Task { await pane.reload() } } label: { Image(systemName: "arrow.clockwise") }
