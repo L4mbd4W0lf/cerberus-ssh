@@ -150,6 +150,7 @@ extension AppModel {
             }
         }
         session.nodeColor = host.effectiveColor
+        session.shownEndpoint = UITesting.shownEndpoint(for: host)
         // Feeds ⌘K's ranking: most used and most recent first.
         session.onConnected = { [weak host, weak self] in
             guard let host else { return }

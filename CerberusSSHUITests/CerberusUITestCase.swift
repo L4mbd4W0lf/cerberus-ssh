@@ -134,6 +134,10 @@ class CerberusUITestCase: XCTestCase {
         var snippets: [(title: String, body: String)] = []
         /// Migration backups to have on disk, by the version each came from (see `UITesting.Scenario.migrationBackups`).
         var migrationBackups: [String] = []
+        /// `light` or `dark` whatever the Mac is set to (see `UITesting.Scenario.appearance`).
+        var appearance: String?
+        /// The main window's content size, as (width, height).
+        var windowSize: (Double, Double)?
         /// A new process rather than a reset, and with the first-launch import offer allowed.
         var freshLaunch = false
         var firstLaunchOffer = false
@@ -192,6 +196,8 @@ class CerberusUITestCase: XCTestCase {
         if !options.favourites.isEmpty { scenario["favourites"] = options.favourites }
         if !options.migrationBackups.isEmpty { scenario["migrationBackups"] = options.migrationBackups }
         if !options.snippets.isEmpty { scenario["snippets"] = options.snippets.map { ["title": $0.title, "body": $0.body] } }
+        if let appearance = options.appearance { scenario["appearance"] = appearance }
+        if let size = options.windowSize { scenario["windowSize"] = [size.0, size.1] }
         return scenario
     }
 

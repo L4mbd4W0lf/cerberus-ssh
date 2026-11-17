@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import CryptoKit
 import SwiftData
@@ -35,7 +36,8 @@ enum UITesting {
     /// What a test wants the app to look like: set at launch (`CERBERUS_UI_SCENARIO`, JSON) and again,
     /// without restarting the app, by a command from the test (`UITestControl`).
     struct Scenario {
-        /// `basic`, `live`, `live-untrusted`, `live-mismatch`, `live-mismatch-partway` (the first hop of `live-chain` trusted, the second not), or anything else for an empty catalogue.
+        /// `basic`, `live`, `live-untrusted`, `live-mismatch`, `live-mismatch-partway` (the first hop of `live-chain` trusted, the second not),
+        /// `readme` (the demo catalogue the README's pictures are taken of), or anything else for an empty catalogue.
         var seed = "basic"
         /// Preferences to put in place, as the test's JSON object.
         var defaults: [String: Any] = [:]
@@ -54,6 +56,10 @@ enum UITesting {
         var snippets: [(title: String, body: String)] = []
         /// The performance gate: many sessions at once, each flooding the screen.
         var perf: PerfPlan?
+        /// `light` or `dark` whatever the Mac is set to, for pictures in both; `nil` follows the Mac.
+        var appearance: String?
+        /// The main window's content size, so pictures come out the same size on any screen.
+        var windowSize: CGSize?
 
         struct PerfPlan {
             var host = "live-1"
@@ -77,6 +83,8 @@ enum UITesting {
             favourites = object["favourites"] as? [String] ?? []
             migrationBackups = object["migrationBackups"] as? [String] ?? []
             snippets = (object["snippets"] as? [[String: String]] ?? []).map { ($0["title"] ?? "", $0["body"] ?? "") }
+            appearance = object["appearance"] as? String
+            if let size = object["windowSize"] as? [Double], size.count == 2 { windowSize = CGSize(width: size[0], height: size[1]) }
             if let plan = object["perf"] as? [String: Any] {
                 var parsed = PerfPlan()
                 parsed.host = plan["host"] as? String ?? parsed.host
@@ -90,6 +98,39 @@ enum UITesting {
     }
 
     static var launchScenario: Scenario { Scenario(json: ProcessInfo.processInfo.environment["CERBERUS_UI_SCENARIO"]) }
+
+    /// What the status bar shows for a `readme` host that really connects to the test's `sshd`: the address it would
+    /// have, not 127.0.0.1 and the login of the person running the tests. Empty outside that seed.
+    @MainActor static var shownEndpoints: [UUID: String] = [:]
+
+    @MainActor static func shownEndpoint(for host: SSHHost) -> String? { isActive ? shownEndpoints[host.id] : nil }
+
+    /// Where the `readme` seed puts its demo files: a website's folder on "this Mac" (`Projects/website`) and one
+    /// folder per host standing in for its server (`servers/<host>`), at a path that names nobody. Hosts' stand-ins
+    /// are under the test home for every other seed.
+    static let readmeFiles = "/tmp/cerberus-demo"
+    @MainActor static var hostFolders: String?
+
+    /// Light or dark, and the main window's size, as the scenario asks. At launch the window may not be up yet,
+    /// so it is looked for a few times.
+    @MainActor static func applyLook(_ scenario: Scenario) async {
+        guard isActive else { return }
+        NSApp.appearance = switch scenario.appearance {
+        case "light": NSAppearance(named: .aqua)
+        case "dark": NSAppearance(named: .darkAqua)
+        default: nil
+        }
+        guard let size = scenario.windowSize else { return }
+        for _ in 0..<30 {
+            let workspace = NSApp.windows.filter { $0.identifier?.rawValue.hasPrefix("SwiftUI.WindowGroup") == true && $0.isVisible }
+            if let main = workspace.min(by: { $0.windowNumber < $1.windowNumber }) {
+                main.setContentSize(size)
+                main.center()
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(100))
+        }
+    }
 
     /// The password stored for the seeded "deploy" identity, which a test reveals.
     static let seededPassword = "uitest-password-1"
@@ -106,7 +147,8 @@ enum UITesting {
               let host = context.fetchLogged(FetchDescriptor<SSHHost>()).first(where: { $0.id == hostID }),
               host.name != "live-sftp" else { return nil }   // "live-sftp" is the one that is really connected to
         let base = ProcessInfo.processInfo.environment["CFFIXED_USER_HOME"] ?? NSHomeDirectory()
-        let folder = (base as NSString).appendingPathComponent("uitest-hosts/\(host.displayLabel)")
+        let folder = hostFolders.map { ($0 as NSString).appendingPathComponent(host.displayLabel) }
+            ?? (base as NSString).appendingPathComponent("uitest-hosts/\(host.displayLabel)")
         try? FileManager.default.createDirectory(atPath: folder, withIntermediateDirectories: true)
         return (folder, host.displayLabel)
     }
@@ -147,6 +189,13 @@ enum UITesting {
         }
         seedMigrationBackups(scenario.migrationBackups)
         let seed = scenario.seed
+        shownEndpoints = [:]
+        hostFolders = nil
+        if isActive, seed == "readme" {
+            await populateReadme(context: context, vault: vault)
+            context.saveLogged()
+            return
+        }
         guard isActive, ["basic", "live", "live-untrusted", "live-mismatch", "live-mismatch-partway"].contains(seed) else { return }
 
         let production = TreeNode(name: "Production")
@@ -276,5 +325,91 @@ enum UITesting {
         } catch {
             CerberusLog.caught(error, note: "seeding the live UI-test hosts")
         }
+    }
+
+    /// The demo catalogue the README's pictures are taken of (ReadmeScreenshotTests): folders with colours, hosts
+    /// with tags, forwards and identities that look like a real setup. `web-1` and `api-1` really connect, to the
+    /// test's `sshd`, and show the address they would have (`shownEndpoints`); the rest are never connected to.
+    @MainActor
+    private static func populateReadme(context: ModelContext, vault: Vault) async {
+        let env = ProcessInfo.processInfo.environment
+        guard let portText = env["CERBERUS_UI_LIVE_PORT"], let port = Int(portText),
+              let keyPath = env["CERBERUS_UI_LIVE_KEY"], let pem = try? String(contentsOfFile: keyPath, encoding: .utf8),
+              let user = env["CERBERUS_UI_LIVE_USER"] else {
+            CerberusLog.warning("uitest", "readme seed requested without a server")
+            return
+        }
+        let production = TreeNode(name: "Production", colorTag: NodeColor.red.rawValue)
+        let staging = TreeNode(name: "Staging", colorTag: NodeColor.yellow.rawValue)
+        let homeLab = TreeNode(name: "Home Lab", colorTag: NodeColor.teal.rawValue)
+        [production, staging, homeLab].forEach(context.insert)
+
+        do {
+            let key = try await VaultItemBridge.makeItem(for: .privateKey(pem), using: vault)
+            context.insert(key)
+            // Signs in as the person running the tests, which the status bar never shows for these hosts.
+            let deploy = Identity(name: "deploy", username: user, kind: .privateKey, vaultItemID: key.id)
+            context.insert(deploy)
+            let password = try await VaultItemBridge.makeItem(for: .password(seededPassword), using: vault)
+            context.insert(password)
+            let ops = Identity(name: "ops", username: "ops", kind: .password, vaultItemID: password.id)
+            context.insert(ops)
+
+            let web1 = SSHHost(id: stableID("web-1"), name: "web-1", hostname: "127.0.0.1", port: port, identity: deploy,
+                               folder: production, tags: ["nginx"])
+            let api1 = SSHHost(id: stableID("api-1"), name: "api-1", hostname: "127.0.0.1", port: port, identity: deploy,
+                               folder: production, tags: ["api"])
+            shownEndpoints[web1.id] = "deploy@web-1.example.com"
+            shownEndpoints[api1.id] = "deploy@api-1.example.com"
+            let hosts = [
+                web1, api1,
+                SSHHost(id: stableID("web-2"), name: "web-2", hostname: "web-2.example.com", identity: ops, folder: production, tags: ["nginx"]),
+                SSHHost(id: stableID("db-1"), name: "db-1", hostname: "db-1.example.com", identity: ops, folder: production, tags: ["postgres"]),
+                SSHHost(id: stableID("staging-web"), name: "staging-web", hostname: "web.staging.example.com", identity: ops, folder: staging),
+                SSHHost(id: stableID("staging-db"), name: "staging-db", hostname: "db.staging.example.com", identity: ops, folder: staging,
+                        tags: ["postgres"]),
+                SSHHost(id: stableID("nas"), name: "nas", hostname: "nas.home.arpa", port: 2222, identity: ops, folder: homeLab),
+                SSHHost(id: stableID("pi-hole"), name: "pi-hole", hostname: "pihole.home.arpa", identity: ops, folder: homeLab),
+            ]
+            hosts.forEach(context.insert)
+            web1.isFavourite = true
+            api1.isFavourite = true
+
+            context.insert(PortForward(kind: .local, bindPort: 15432, destinationHost: "db.internal", destinationPort: 5432,
+                                       name: "Production database", host: hosts[3]))
+            context.insert(PortForward(kind: .dynamic, bindPort: 1080, name: "SOCKS proxy", host: web1))
+            context.insert(PortForward(kind: .remote, bindPort: 8080, destinationHost: "localhost", destinationPort: 3000,
+                                       name: "Webhook to my dev server", host: api1))
+            context.insert(PortForward(kind: .local, bindPort: 8443, destinationHost: "localhost", destinationPort: 443,
+                                       name: "NAS admin", host: hosts[6]))
+
+            if let line = env["CERBERUS_UI_LIVE_HOSTKEY"], let parsed = try? OpenSSHPublicKey.parse(line) {
+                context.insert(KnownHostKey(
+                    hostPattern: "127.0.0.1:\(port)", keyType: parsed.algorithm, publicKeyBlob: parsed.blob,
+                    fingerprintSHA256: SSHFingerprint.sha256(ofPublicKeyBlob: parsed.blob)
+                ))
+            }
+            makeReadmeFiles()
+        } catch {
+            CerberusLog.caught(error, note: "seeding the readme UI-test hosts")
+        }
+    }
+
+    /// The demo files a file tab shows in the README's picture (see `readmeFiles`), made afresh each time.
+    @MainActor
+    private static func makeReadmeFiles() {
+        let fm = FileManager.default
+        try? fm.removeItem(atPath: readmeFiles)
+        func put(_ folder: String, _ names: [String], size: Int) {
+            for name in names {
+                let path = (readmeFiles as NSString).appendingPathComponent("\(folder)/\(name)")
+                try? fm.createDirectory(atPath: (path as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
+                fm.createFile(atPath: path, contents: Data(repeating: 0x78, count: size + name.count * 137))
+            }
+        }
+        put("Projects/website", ["index.html", "about.html", "styles.css", "app.js", "assets/logo.svg", "assets/hero.jpg", "README.md"], size: 900)
+        put("servers/web-2", ["index.html", "styles.css", "app.js", "assets/logo.svg", "nginx.conf", "logs/access.log", "logs/error.log",
+                              "backups/site-2026-11-01.tar.gz"], size: 1200)
+        hostFolders = (readmeFiles as NSString).appendingPathComponent("servers")
     }
 }

@@ -109,6 +109,7 @@ extension AppModel {
         uiTestEpoch += 1   // every view starts afresh: no sheet, search text or selection survives
         main?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+        await UITesting.applyLook(scenario)
     }
 }
 #endif

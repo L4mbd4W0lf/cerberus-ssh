@@ -251,8 +251,12 @@ final class SessionViewModel: Identifiable {
         )
     }
 
+    /// Shown instead of the real address (UI tests only: the README's pictures, see `UITesting.shownEndpoints`).
+    var shownEndpoint: String?
+
     /// `user@host:port`, plus the jump chain, for the status bar and ⌘K.
     var endpointDescription: String {
+        if let shownEndpoint { return shownEndpoint }
         let base = "\(target.username)@\(target.hostname)" + (target.port == 22 ? "" : ":\(target.port)")
         guard !jumpHops.isEmpty else { return base }
         return base + " via " + jumpHops.map(\.target.hostname).joined(separator: " → ")

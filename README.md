@@ -17,6 +17,41 @@ A native macOS SSH client, written in Swift and SwiftUI. It keeps everything on 
 - **Safety copy before a migration.** When an update has to migrate your catalogue, the old file is first copied to `Migration Backups/` with its version in the name. Settings ▸ Advanced lists them, and can re-migrate from one or delete them.
 - **Accessibility.** Increase Contrast and Reduce Motion are respected. VoiceOver support is not provided and will not be added (see the spec, §13.2).
 
+## Screenshots
+
+Each picture moves between light mode (left of the divider) and dark mode (right of it). The hosts, addresses and files shown are demo data. Click a picture to see it full size.
+
+<table>
+  <tr>
+    <td align="center" valign="top" width="33%">
+      <a href="screenshots/terminal-light.png"><img src="screenshots/terminal.webp" alt="A terminal split in two panes, with the host tree and its coloured folders, in light and dark mode" width="100%"></a>
+      <br><sub><b>Terminal</b><br>Split panes, host tree with coloured folders</sub>
+    </td>
+    <td align="center" valign="top" width="33%">
+      <a href="screenshots/file-tab-light.png"><img src="screenshots/file-tab.webp" alt="A file tab with This Mac on the left and the server web-2 on the right, in light and dark mode" width="100%"></a>
+      <br><sub><b>File tab (SFTP)</b><br>This Mac beside a server</sub>
+    </td>
+    <td align="center" valign="top" width="33%">
+      <a href="screenshots/quick-connect-light.png"><img src="screenshots/quick-connect.webp" alt="The quick-connect field with db typed and two matching hosts, in light and dark mode" width="100%"></a>
+      <br><sub><b>Quick connect (⌘K)</b><br>By name, address or tag</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" valign="top" width="33%">
+      <a href="screenshots/port-forwards-light.png"><img src="screenshots/port-forwards.webp" alt="The Port Forwards sidebar tab listing four forwards, in light and dark mode" width="100%"></a>
+      <br><sub><b>Port forwards</b><br>Local, remote and SOCKS</sub>
+    </td>
+    <td align="center" valign="top" width="33%">
+      <a href="screenshots/host-editor-light.png"><img src="screenshots/host-editor.webp" alt="The host editor sheet for db-1, in light and dark mode" width="100%"></a>
+      <br><sub><b>Host editor</b></sub>
+    </td>
+    <td align="center" valign="top" width="33%">
+      <a href="screenshots/settings-appearance-light.png"><img src="screenshots/settings-appearance.webp" alt="Settings, Appearance: the default theme with a preview, and your own themes, in light and dark mode" width="100%"></a>
+      <br><sub><b>Settings ▸ Appearance</b><br>Themes, your own or from iTerm2</sub>
+    </td>
+  </tr>
+</table>
+
 ## Install
 
 Download `CerberusSSH-<version>.dmg` from the [Releases](../../releases) page, open it and drag CerberusSSH onto Applications. **Requires macOS 26 or later** (built and used on 27; 26 compiles but has had less testing).

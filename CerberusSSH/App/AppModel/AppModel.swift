@@ -175,6 +175,7 @@ final class AppModel {
                     #endif
                     startAutoBackupSchedule()
                     UITestControl.start(app: self)
+                    await UITesting.applyLook(scenario)
                     return
                 }
                 startAutoBackupSchedule()
