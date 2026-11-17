@@ -11,6 +11,9 @@ final class LiveSessionTests: CerberusUITestCase {
         wait(tab("live-1"), "no tab for the session")
         wait(mainWindow.staticTexts["Connected"], "the status bar does not say Connected")
         eventually("the server never saw the session") { server!.liveSessions() == 1 }
+        // The sign-in attempt ("— Trying publickey…") is gone once signed in.
+        let attempt = mainWindow.staticTexts.matching(NSPredicate(format: "value CONTAINS 'Trying'")).firstMatch
+        eventually("the status bar still shows the sign-in attempt") { !attempt.exists }
     }
 
     @MainActor func testClosingATabEndsTheConnectionOnTheServer() throws {

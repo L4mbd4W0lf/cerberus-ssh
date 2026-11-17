@@ -69,6 +69,9 @@ final class SessionViewModel: Identifiable {
 
     private(set) var state: ConnectionState = .idle
     private(set) var statusDetail: String?
+    /// The "Trying publickey…" line the last sign-in attempt put in ``statusDetail``, cleared once signed in. Anything
+    /// said since (a failure, a host key just recorded) is left alone.
+    private var attemptDetail: String?
     private(set) var hostKeyFingerprint: String?
 
     /// Connection log lines (`debug1`…`debug3`) for the current attempt, when logging
@@ -333,6 +336,10 @@ final class SessionViewModel: Identifiable {
                 switch event {
                 case .stateChanged(let newState):
                     self.state = newState
+                    if case .authenticated = newState, let attempt = self.attemptDetail {
+                        if self.statusDetail == attempt { self.statusDetail = nil }
+                        self.attemptDetail = nil
+                    }
                     if case .active = newState { self.didBecomeActive() }
                     if case .disconnected(let reason) = newState {
                         // The connection seals its log as it closes.
@@ -346,6 +353,7 @@ final class SessionViewModel: Identifiable {
                     self.apply(decision)
                 case .authenticationAttempt(let attempt):
                     self.statusDetail = "Trying \(attempt)…"
+                    self.attemptDetail = self.statusDetail
                 case .failed(let message):
                     self.statusDetail = message
                     CerberusLog.error("session", "\(self.title): \(message)")
@@ -380,6 +388,7 @@ final class SessionViewModel: Identifiable {
         reconnectIn = nil
         observer?.cancel()
         statusDetail = nil
+        attemptDetail = nil
         diagnostics = []
         // A recording ends with its connection; the new attempt is not recorded until asked.
         isRecording = false
