@@ -47,7 +47,13 @@ extension FocusedValues {
 final class SidebarKeyHandler {
     var actions = SidebarActions()
     /// The window whose sidebar this is: with several windows each has a handler, and only its own may act.
-    weak var window: NSWindow?
+    /// A window has one handler at a time (see ``WindowOwners``): an old one would otherwise live on, its actions
+    /// holding its view, which holds it, and could take a key the live handler should have had.
+    weak var window: NSWindow? {
+        didSet { if let window { Self.owners.claim(window, for: self) { $0.retire() } } }
+    }
+    private static let owners = WindowOwners<SidebarKeyHandler>()
+    private var isRetired = false
     nonisolated(unsafe) private var monitor: Any?
 
     var hasKeyboard: Bool {
@@ -55,8 +61,16 @@ final class SidebarKeyHandler {
         return Self.sidebarHasKeyboard(window)
     }
 
+    /// Stops listening for good, and lets go of the view the actions hold.
+    private func retire() {
+        isRetired = true
+        if let monitor { NSEvent.removeMonitor(monitor) }
+        monitor = nil
+        actions = SidebarActions()
+    }
+
     func install() {
-        guard monitor == nil else { return }
+        guard monitor == nil, !isRetired else { return }
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             var consumed = false
             MainActor.assumeIsolated { consumed = self?.handle(event) ?? false }
