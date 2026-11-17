@@ -369,7 +369,7 @@
 				INFOPLIST_FILE = CerberusSSH/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = CerberusSSH;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Adrian Hall";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 L4mbd4W0lf";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -494,7 +494,7 @@
 				INFOPLIST_FILE = CerberusSSH/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = CerberusSSH;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Adrian Hall";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 L4mbd4W0lf";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -686,7 +686,7 @@
 				INFOPLIST_FILE = CerberusSSH/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = CerberusSSH;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Adrian Hall";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 L4mbd4W0lf";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -736,7 +736,7 @@
 				INFOPLIST_FILE = CerberusSSH/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = CerberusSSH;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Adrian Hall";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 L4mbd4W0lf";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",

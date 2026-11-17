@@ -2,7 +2,7 @@
 //  RecordingsSettings.swift
 //  CerberusSSH
 //
-//  Created by Adrian Hall on 2026/11/12.
+//  Created by L4mbd4W0lf on 2026/11/12.
 //
 
 import CerberusModels

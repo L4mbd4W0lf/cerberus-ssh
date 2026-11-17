@@ -77,6 +77,6 @@ Secrets are sealed with AES-GCM under a data key kept in the Keychain (this devi
 
 ## Licence
 
-The interface in this repository is under the Apache License 2.0. Copyright 2026 Adrian Hall. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
+The interface in this repository is under the Apache License 2.0. Copyright 2026 L4mbd4W0lf. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
 
 CerberusSSH includes the work of others under their own licences (swift-nio-ssh, swift-nio, swift-crypto, SwiftTerm and others), listed with their notices in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). The modified copy of swift-nio-ssh is Apache-2.0 too; what was changed is in `THIRD_PARTY_NOTICES.md`. Apache-2.0 covers the interface in this repository. The package it builds against is not part of this licence.
