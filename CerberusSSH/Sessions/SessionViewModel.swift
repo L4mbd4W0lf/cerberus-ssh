@@ -55,6 +55,10 @@ final class SessionViewModel: Identifiable {
     /// The terminal this session shows: its emulator and scrollback live as long as the session does, whichever
     /// pane, tab or window it is shown in.
     let terminalHost = TerminalHost()
+
+    /// The session has left the app: lets go of its terminal. The terminal's callbacks hold this session, and this
+    /// session holds the terminal, so without this neither would ever be freed.
+    func releaseTerminal() { terminalHost.tearDown() }
     let hostID: UUID
     let title: String
     /// A connection that only carries port forwards: no terminal, no tab. It ends when its last

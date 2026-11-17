@@ -97,6 +97,7 @@ extension AppModel {
         await session.disconnect()
         keepLog(of: session)
         sessions.removeAll { $0.id == session.id }
+        session.releaseTerminal()
 
         guard let index = tabs.firstIndex(where: { $0.layout.contains(session.id) }) else { return }
         let tabID = tabs[index].id
@@ -185,6 +186,7 @@ extension AppModel {
         for tab in tabs { await tab.files?.shutdown() }
         for session in sessions + tunnels {
             await session.disconnect()
+            session.releaseTerminal()
         }
         sessions.removeAll()
         tunnels.removeAll()
