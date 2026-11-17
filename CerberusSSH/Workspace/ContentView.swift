@@ -818,7 +818,7 @@ struct ContentView: View {
             let copy = SSHHost(
                 name: CopyName.of(original.displayLabel, among: names),
                 hostname: original.hostname, port: original.port,
-                identity: original.identity, folder: original.folder, tags: original.tags,
+                identity: original.liveIdentity, folder: original.folder, tags: original.tags,
                 jumpHostIDs: original.jumpHostIDs, terminalType: original.terminalType,
                 keepAliveInterval: original.keepAliveInterval, autoReconnect: original.autoReconnect
             )

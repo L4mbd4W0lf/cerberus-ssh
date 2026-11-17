@@ -193,7 +193,7 @@ extension AppModel {
         if host.usesNoAuthentication {
             return (host.noAuthenticationUsername ?? "", .noAuthentication)
         }
-        guard let identity = host.identity else { throw SSHError.noCredentials }
+        guard let identity = host.liveIdentity else { throw SSHError.noCredentials }
         return (identity.username, try await resolveCredentials(for: identity))
     }
 

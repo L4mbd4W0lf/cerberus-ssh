@@ -394,10 +394,10 @@ struct HostEditorView: View {
         port = host.port
         folderID = host.folder?.id
         tags = host.tags
-        identityChoice = host.identity?.id
+        identityChoice = host.liveIdentity?.id
         noAuthentication = host.usesNoAuthentication
         username = host.loginUsername ?? ""
-        kind = host.identity?.kind ?? .password
+        kind = host.liveIdentity?.kind ?? .password
         jumpIDs = host.jumpHostIDs
         initialCommand = host.initialCommand ?? ""
         terminalType = host.terminalType
