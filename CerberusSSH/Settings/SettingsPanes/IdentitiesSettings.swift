@@ -283,6 +283,7 @@ struct IdentitiesSettings: View {
         {
             modelContext.delete(item)
         }
+        identity.releaseHosts()
         modelContext.delete(identity)
         modelContext.saveLogged()
         selection = nil

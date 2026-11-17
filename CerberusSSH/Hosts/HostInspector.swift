@@ -97,7 +97,7 @@ struct HostInspector: View {
             }
 
             Section("Sign-in") {
-                if let identity = host.identity {
+                if let identity = host.liveIdentity {
                     LabeledContent("User", value: identity.username)
                     LabeledContent("Method", value: identity.kind.displayName)
                     if let algorithm = identity.keyAlgorithm { LabeledContent("Key", value: algorithm) }

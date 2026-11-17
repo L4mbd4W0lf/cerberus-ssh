@@ -62,8 +62,11 @@ extension AppModel {
     /// Backups made earlier are unaffected and can still be imported.
     func eraseAllData(context: ModelContext) async throws {
         await closeAll()
+        // Hosts go first and are saved away before the identities: a row still on screen then never reads a
+        // host's identity after it is deleted.
         try context.delete(model: SSHHost.self)
         try context.delete(model: TreeNode.self)
+        try context.save()
         try context.delete(model: Identity.self)
         try context.delete(model: VaultItem.self)
         try context.delete(model: VaultKey.self)
