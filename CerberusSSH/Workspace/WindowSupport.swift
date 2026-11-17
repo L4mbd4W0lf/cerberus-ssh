@@ -45,11 +45,18 @@ struct WindowObserver: NSViewRepresentable {
         anchor.applyRequestedFrame()
     }
 
+    /// SwiftUI is done with the view. Whatever else still holds the anchor (AppKit was seen to keep one alive in a
+    /// notification observer), it must not go on holding what its closures captured: the owning view with its handlers
+    /// and sessions.
+    static func dismantleNSView(_ view: NSView, coordinator: ()) {
+        (view as? Anchor)?.teardown()
+    }
+
     private final class Anchor: NSView {
-        let onKey: (NSWindow) -> Void
-        let onClose: () -> Void
+        var onKey: (NSWindow) -> Void
+        var onClose: () -> Void
         private var origin: CGPoint?
-        private let onPlaced: () -> Void
+        private var onPlaced: () -> Void
         private var tokens: [NSObjectProtocol] = []
         var closeQuestion: () -> (title: String, message: String)?
         var onFrame: (CGRect) -> Void = { _ in }
@@ -68,6 +75,24 @@ struct WindowObserver: NSViewRepresentable {
             super.init(frame: .zero)
         }
         required init?(coder: NSCoder) { fatalError("not used") }
+
+        /// Lets go of the notification observers, the close button and every closure.
+        func teardown() {
+            tokens.forEach(NotificationCenter.default.removeObserver)
+            tokens = []
+            if let button = window?.standardWindowButton(.closeButton), button.target === self {
+                button.target = originalTarget
+                button.action = originalAction
+            }
+            originalTarget = nil
+            onKey = { _ in }
+            onClose = {}
+            onPlaced = {}
+            closeQuestion = { nil }
+            onFrame = { _ in }
+            onFramePlaced = {}
+            requestedFrame = nil
+        }
 
         override func viewDidMoveToWindow() {
             super.viewDidMoveToWindow()

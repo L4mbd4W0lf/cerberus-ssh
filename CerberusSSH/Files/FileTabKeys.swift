@@ -25,13 +25,26 @@ enum PaneRequest: Equatable { case newFolder, rename, permissions, delete }
 /// path being edited keeps ⌘⌫ and ⌘R keeps reconnecting an SSH tab.
 @MainActor
 final class FileTabKeyHandler {
-    weak var window: NSWindow?
+    /// A window has one of these at a time: see ``WindowOwners``.
+    weak var window: NSWindow? {
+        didSet { if let window { Self.owners.claim(window, for: self) { $0.retire() } } }
+    }
+    private static let owners = WindowOwners<FileTabKeyHandler>()
+    private var isRetired = false
     /// The file tab shown in this window, if the selected tab is one.
     var currentTab: () -> FileTabModel? = { nil }
     nonisolated(unsafe) private var monitor: Any?
 
+    /// Stops listening for good.
+    private func retire() {
+        isRetired = true
+        if let monitor { NSEvent.removeMonitor(monitor) }
+        monitor = nil
+        currentTab = { nil }
+    }
+
     func install() {
-        guard monitor == nil else { return }
+        guard monitor == nil, !isRetired else { return }
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             var consumed = false
             MainActor.assumeIsolated { consumed = self?.handle(event) ?? false }
@@ -73,6 +86,20 @@ final class FileTabKeyHandler {
             view = current.superview
         }
         return inList && !(window.firstResponder is NSText)
+    }
+}
+
+/// Lets a window have one key handler of a kind at a time. A view that is made again (the app's views are rebuilt, a
+/// window's contents are replaced) makes a new handler for the same window, and the old one, if nothing released it, would
+/// go on hearing the window's keys and acting on a view that is gone. The newest handler to take a window retires the
+/// one that had it.
+@MainActor
+final class WindowOwners<Handler: AnyObject> {
+    private let table = NSMapTable<NSWindow, Handler>.weakToWeakObjects()
+
+    func claim(_ window: NSWindow, for handler: Handler, retiring retire: (Handler) -> Void) {
+        if let previous = table.object(forKey: window), previous !== handler { retire(previous) }
+        table.setObject(handler, forKey: window)
     }
 }
 
