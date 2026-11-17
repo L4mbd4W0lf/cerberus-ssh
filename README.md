@@ -2,7 +2,7 @@
 
 A native macOS SSH client, written in Swift and SwiftUI. It keeps everything on your Mac: your hosts, saved logins and keys are stored locally and sealed with a key held in the Keychain, and there is an encrypted backup you control. There is no account, no cloud service and no telemetry.
 
-> **Status: pre-release (0.3.1).** It works and is used against real servers, but it has not been notarised yet, and some features are missing (see [What is not built](#what-is-not-built)).
+> **Status: pre-release (0.3.2).** It works and is used against real servers, but it has not been notarised yet, and some features are missing (see [What is not built](#what-is-not-built)).
 
 **Who it is for:** advanced computer users, people who already know SSH and work quickly. It favours speed and the keyboard over hand-holding.
 
