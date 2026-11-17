@@ -2,6 +2,17 @@
 
 Features that are wanted but not started. Nothing here is promised for a release.
 
+## Search in Settings
+
+Add `.searchable` to `SettingsView` (`CerberusSSH/Settings/SettingsView.swift`) so people can find a setting without knowing which category it is in, as in System Settings.
+
+- [ ] A search field in the Settings window's sidebar; while there is text, the sidebar lists the matching settings (and the categories they are in) instead of only the categories.
+- [ ] An index of what can be found: each setting's label, the category (`SettingsTab`) it is in, and extra words people might search for (for example "font" for the terminal font, "passphrase" for backups). Kept next to the panes in `CerberusSSH/Settings/SettingsPanes/` so a new setting is not left out.
+- [ ] Choosing a result opens its category, scrolls to the setting and highlights it briefly.
+- [ ] No results: say so, and keep the categories reachable.
+- [ ] ⌘F focuses the field. The sidebar's host filter avoids `.searchable` because ⌘F would clash with Find in the terminal (`SidebarTabs.swift`); Settings is its own window, so check that the clash does not happen there.
+- [ ] VoiceOver label and an accessibility identifier for the field, and a UI test.
+
 ## Upgrade the port forwarding UI
 
 The windows and sheets for port forwarding, and how forwards are presented, need a design pass. Scope not decided yet.
