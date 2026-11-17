@@ -48,7 +48,7 @@ The tests, the performance gate and the release scripts are in the kit repositor
 
 ## Version numbers
 
-Versions are `major.minor.patch`, with the major number 0 until version 1. **No number other than the first goes past 10**: after 0.1.10 comes 0.2.0, after 0.2.10 comes 0.3.0, and so on. 0.2.0 was the first release made under it. The version is the app's `MARKETING_VERSION`.
+Versions are `major.minor.patch`, with the major number 0 until version 1. **No number other than the first goes past 9**: after 0.1.9 comes 0.2.0, after 0.9.9 comes 1.0.0, and so on; only the major number has no limit. (Until 0.3.0 the limit was 10; 0.2.0 was the first release made under that rule.) The version is the app's `MARKETING_VERSION`.
 
 ## How it is put together
 
