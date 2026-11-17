@@ -2,6 +2,18 @@
 
 Features that are wanted but not started. Nothing here is promised for a release.
 
+## Build the Settings window on an AppKit split view
+
+The Settings sidebar must not collapse, and `NavigationSplitView` does not allow that. Today `SettingsView` (`CerberusSSH/Settings/SettingsView.swift`) reaches into SwiftUI's split view with SwiftUIIntrospect, sets `canCollapse` off, and watches it with key-value observing because SwiftUI turns it back on whenever the category changes (`ebd48c7`). That is a library fighting another library's internals, it only covers macOS 26 and 27, and it is the only use of SwiftUIIntrospect. Do it the way System Settings appears to: own the split view in AppKit and host the SwiftUI parts inside it.
+
+- [ ] An `NSSplitViewController` for the Settings window, with the sidebar as `NSSplitViewItem(sidebarWithViewController:)` (the real full-height glass sidebar), `canCollapse` and `canCollapseFromWindowResize` off, and a fixed width. AppKit owns it, so nothing turns collapsing back on.
+- [ ] The category list and the panes stay SwiftUI, hosted with `NSHostingController`; selection still goes through `app.settingsTab`.
+- [ ] Keep opening Settings on a given category (⌘, and the places that set `app.settingsTab`) working, and keep the window's size (880 × 600).
+- [ ] Back and forward toolbar buttons driven by a history of the categories shown (and, with search, the setting jumped to).
+- [ ] Room for the search field at the top of the sidebar (see Search in Settings below), so the two can be built together.
+- [ ] Remove `SidebarLock`, `findSplitView`, `lockSidebar`, the `.introspect` call and the `onChange` workaround, then the SwiftUIIntrospect package.
+- [ ] The UI tests that caught the collapse bug still pass, and the `settings-tab-*` identifiers still work.
+
 ## Search in Settings
 
 Add `.searchable` to `SettingsView` (`CerberusSSH/Settings/SettingsView.swift`) so people can find a setting without knowing which category it is in, as in System Settings.
