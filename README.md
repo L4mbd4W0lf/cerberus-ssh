@@ -54,7 +54,22 @@ Each picture moves between light mode (left of the divider) and dark mode (right
 
 ## Install
 
-Download `CerberusSSH-<version>.dmg` from the [Releases](../../releases) page, open it and drag CerberusSSH onto Applications. **Requires macOS 26 or later** (built and used on 27; 26 compiles but has had less testing).
+**Requires macOS 26 or later** (built and used on 27; 26 compiles but has had less testing). Install it either way, then see [Opening it the first time](#opening-it-the-first-time).
+
+### Disk image
+
+Download `CerberusSSH-<version>.dmg` from the [Releases](../../releases) page, open it and drag CerberusSSH onto Applications.
+
+### Homebrew
+
+CerberusSSH is a cask in the [L4mbd4W0lf/tap](https://github.com/L4mbd4W0lf/homebrew-tap) tap. Trust the tap once, then install:
+
+```
+brew trust L4mbd4W0lf/tap
+brew install --cask L4mbd4W0lf/tap/cerberusssh
+```
+
+Upgrade with `brew upgrade --cask cerberusssh`. If CerberusSSH is already in Applications from the disk image, Homebrew will not overwrite it: add `--force` to the install to replace it with the Homebrew copy (your hosts and settings are kept). `brew info --cask cerberusssh` shows the quarantine step again.
 
 ### Opening it the first time
 
@@ -76,7 +91,7 @@ Download `CerberusSSH-<version>.dmg` from the [Releases](../../releases) page, o
 
    - **System Settings:** open CerberusSSH once and close the message, then go to System Settings ▸ Privacy & Security, scroll to Security, click **Open Anyway** next to the line about CerberusSSH, and confirm with your password or Touch ID.
 
-3. **Updating:** each new version you download is quarantined again, so repeat step 2 after replacing the app.
+3. **Updating:** each new version is quarantined again, whether downloaded or upgraded with Homebrew, so repeat step 2 after replacing the app.
 
 Your hosts, keys and settings are not touched by any of this: they live in your user folder and the Keychain, not inside the app.
 
