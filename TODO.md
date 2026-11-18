@@ -44,19 +44,6 @@ Transfers are shown as a badge in the file tab's status bar (`transfersBadge` in
 - [ ] Decide: the queue is per file tab (`tab.queue`), so should the button show the current tab's transfers or every tab's in the window?
 - [ ] Keep the VoiceOver label and the `files-transfers-badge` / `files-transfers` identifiers working, or update the UI tests.
 
-## Drag files and folders onto a folder to move them (SFTP tab)
-
-Rows can already be dragged, but the only drop target is the whole pane (one `.onDrop` in `CerberusSSH/Files/FilePaneView.swift`, handled by `tab.drop(providers:onto:)`), which drops into the folder the pane is showing. Dropping onto a folder row should move the items into that folder.
-
-- [ ] Make each folder row (and `..`, for the parent) a drop target, highlighted while something is over it; a drop anywhere else in the pane keeps going to the pane's folder.
-- [ ] Same pane, same server: move. The transfer engine already moves by renaming on the same host (`itemsRenamed` in `TransferEngine`), so this should be a rename into the folder, not a copy.
-- [ ] Other pane or another server: decide whether a drop on a folder copies (like the pane drop today) or moves, and whether ⌥ switches between them, as Finder does.
-- [ ] Files dragged in from Finder onto a folder row upload into that folder.
-- [ ] Refuse a folder dropped onto itself or into one of its own subfolders, and dropping items onto the folder they are already in.
-- [ ] Name clashes in the target folder go through the same prompt as a paste.
-- [ ] Optional: spring-loaded folders (hover over a folder while dragging to open it).
-- Keep the note in `FilePaneView` in mind: one drop destination per view, and not `.item`, or a dragged server file gets downloaded on drop.
-
 ## Import hosts from iTerm2 profiles
 
 Today the only thing brought in from iTerm2 is a colour preset (`.itermcolors`, via `ITermColors.theme(from:name:)` in the kit, from Settings ▸ Appearance ▸ Your themes ▸ Import from iTerm2…). Hosts come only from `~/.ssh/config` (`SSHConfigImporter`).

@@ -20,6 +20,9 @@ struct FilePaneView: View {
     @State private var changingMode: FileEntry?
     @State private var modeText = ""
     @State private var isDropTarget = false
+    /// The folder row something is being dragged over, which a drop goes into instead of the pane's folder.
+    @State private var dropFolder: String?
+    @State private var rowFrames = RowFrames()
     @State private var isPickingSource = false
     /// The list has the keyboard. Kept in step with ``FileTabModel/focusedSide``: clicking a pane focuses it, and
     /// moving the focus with the keys puts the keyboard in the pane that gets it.
@@ -41,7 +44,8 @@ struct FilePaneView: View {
                     .accessibilityIdentifier("files-notice-\(side)")
             }
         }
-        .overlay { if isDropTarget { RoundedRectangle(cornerRadius: 4).strokeBorder(Color.accentColor, lineWidth: 3).allowsHitTesting(false) } }
+        // Over a folder row the row is highlighted instead: that is where the drop goes.
+        .overlay { if isDropTarget && dropFolder == nil { RoundedRectangle(cornerRadius: 4).strokeBorder(Color.accentColor, lineWidth: 3).allowsHitTesting(false) } }
         // The pane that ⌘C, ⌘V and the keys act on, outlined as the focused pane of an SSH tab is.
         .overlay { if isFocusedPane { Rectangle().strokeBorder(Color.accentColor.opacity(0.8), lineWidth: 2).allowsHitTesting(false) } }
         // A click anywhere in the pane (its header, the empty part of the list) focuses it, and gives the list the
@@ -50,12 +54,14 @@ struct FilePaneView: View {
         .onChange(of: listFocused) { _, focused in if focused { tab.focus(side) } }
         .onChange(of: pathFocused) { _, focused in if focused { tab.focus(side) } }
         .onChange(of: tab.focusedSide) { _, focusedSide in if focusedSide == side, !pathFocused { listFocused = true } }
-        // One destination for everything: two stacked `dropDestination`s leave only one of them working.
+        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { rowFrames.pane = $0 }
+        // One destination for everything: two stacked `dropDestination`s leave only one of them working, and a
+        // destination on a row makes the list take every drop, as a `Table` does (see `listing`). So the folder
+        // rows are not destinations themselves: the pane finds the one under the pointer (see `FileDropDelegate`).
         // Not `.item`: accepting any file type makes the system fetch the file a dragged row offers for
         // Finder as soon as it is dropped, which for a file on a server downloads it to this Mac.
-        .onDrop(of: [FileTabModel.paneItemType, .fileURL], isTargeted: $isDropTarget) { providers in
-            tab.drop(providers: providers, onto: pane)
-        }
+        .onDrop(of: FileDropDelegate.types, delegate: FileDropDelegate(
+            pane: pane, tab: tab, frames: rowFrames, isPaneTarget: $isDropTarget, dropFolder: $dropFolder))
         .onChange(of: pane.request) { _, request in
             guard let request else { return }
             pane.request = nil
@@ -68,7 +74,7 @@ struct FilePaneView: View {
             case .delete: if !chosen.isEmpty { doomed = chosen }
             }
         }
-        .onChange(of: pane.path) { _, new in pathText = new }
+        .onChange(of: pane.path) { _, new in pathText = new; dropFolder = nil }
         .onChange(of: isDropTarget) { _, targeted in CerberusLog.info("files", "the \(pane.source.title) pane is \(targeted ? "" : "no longer ")being dragged over") }
         .onAppear {
             pathText = pane.path
@@ -190,7 +196,7 @@ struct FilePaneView: View {
     private static let dateFormatter: DateFormatter = { let f = DateFormatter(); f.dateStyle = .medium; f.timeStyle = .short; return f }()
 
     private static let rowHeight: CGFloat = 24
-    private static let stripe = Color(nsColor: NSColor.alternatingContentBackgroundColors[1])
+    fileprivate static let stripe = Color(nsColor: NSColor.alternatingContentBackgroundColors[1])
 
     private var stripes: some View {
         Canvas { context, size in
@@ -223,10 +229,12 @@ struct FilePaneView: View {
                     }
                     .listRowInsets(EdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 12))
                     .listRowSeparator(.hidden)
-                    .listRowBackground(index.isMultiple(of: 2) ? Color.clear : Self.stripe)
+                    .listRowBackground(FileRowBackground(entry: entry, striped: !index.isMultiple(of: 2),
+                                                         isDropTarget: dropFolder == entry.path, frames: rowFrames))
                 }
             }
             .listStyle(.plain)
+            .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { rowFrames.list = $0 }
             // The stripes are drawn here, not by the list: it continues them below the last row according to
             // how many rows there are, so two panes with different numbers of rows were out of step. Rows are
             // one fixed height and the empty space below is striped from the same top edge, so panes line up.
@@ -401,6 +409,72 @@ private struct NameSheet: View {
     }
 }
 
+
+/// Where the folder rows (and "..") are in the window, so a drop can tell which one it is over. Not observed: it
+/// changes as the list scrolls, and nothing needs drawing again for that.
+private final class RowFrames {
+    var folders: [String: CGRect] = [:]
+    var list = CGRect.zero
+    var pane = CGRect.zero
+
+    /// The folder row at `point` in the pane; nil off the rows, on a file, or where a row is scrolled under the header.
+    func folder(at point: CGPoint) -> String? {
+        let inWindow = CGPoint(x: pane.minX + point.x, y: pane.minY + point.y)
+        guard list.contains(inWindow) else { return nil }
+        return folders.first { $0.value.contains(inWindow) }?.key
+    }
+}
+
+/// A row's background: its stripe, the box round a folder a drop would go into (as in the sidebar), and, for a
+/// folder, where the row is, for `RowFrames`. The background fills the whole row, where the row's content does not,
+/// and measuring here leaves the row itself, and the list modifiers on it, as they were.
+private struct FileRowBackground: View {
+    let entry: FileEntry
+    let striped: Bool
+    let isDropTarget: Bool
+    let frames: RowFrames
+
+    var body: some View {
+        (striped ? FilePaneView.stripe : Color.clear)
+            .overlay(DropTargetBox().opacity(isDropTarget ? 1 : 0))
+            .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { if entry.isDirectory { frames.folders[entry.path] = $0 } }
+            .onDisappear { if entry.isDirectory { frames.folders[entry.path] = nil } }
+    }
+}
+
+/// The pane's one drop destination. What is let go on a folder row goes into that folder; anywhere else in the pane,
+/// into the folder the pane shows. A drop that may not happen there (see ``FileTabModel/acceptsDrop(on:in:)``) is
+/// refused, and nothing is highlighted for it.
+private struct FileDropDelegate: DropDelegate {
+    static let types: [UTType] = [FileTabModel.paneItemType, .fileURL]
+
+    let pane: FilePaneModel
+    let tab: FileTabModel
+    let frames: RowFrames
+    @Binding var isPaneTarget: Bool
+    @Binding var dropFolder: String?
+
+    func dropEntered(info: DropInfo) { _ = dropUpdated(info: info) }
+
+    func dropUpdated(info: DropInfo) -> DropProposal? {
+        let folder = frames.folder(at: info.location)
+        let accepted = tab.acceptsDrop(on: folder ?? pane.path, in: pane)
+        // Only on a change: this is called as the pointer moves.
+        let newFolder = accepted ? folder : nil, onPane = accepted && folder == nil
+        if dropFolder != newFolder { dropFolder = newFolder }
+        if isPaneTarget != onPane { isPaneTarget = onPane }
+        // The pointer shows a plus for a copy, as Finder's does.
+        return DropProposal(operation: accepted ? (tab.dropMoves(onto: pane) ? .move : .copy) : .forbidden)
+    }
+
+    func dropExited(info: DropInfo) { dropFolder = nil; isPaneTarget = false }
+
+    func performDrop(info: DropInfo) -> Bool {
+        let folder = frames.folder(at: info.location)
+        dropFolder = nil; isPaneTarget = false
+        return tab.drop(providers: info.itemProviders(for: Self.types), onto: pane, into: folder)
+    }
+}
 
 /// A link's target as the row's tooltip ("→ ../current"), read when the row appears (one request per link, only
 /// for links).

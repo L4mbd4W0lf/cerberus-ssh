@@ -466,6 +466,45 @@ final class FilesTests: CerberusUITestCase {
         }
     }
 
+    @MainActor func testDraggingOntoAFolderInTheSamePaneMovesItThereAndDotDotMovesItBack() {
+        let name = unique("into-folder") + ".txt", folder = unique("target")
+        put("moved", at: testHome.appendingPathComponent(name).path)
+        try? fm.createDirectory(atPath: testHome.appendingPathComponent(folder).path, withIntermediateDirectories: true)
+        launch()
+        openFiles(for: "web-1")
+
+        // Within one place a drop on a folder is a move, done by renaming.
+        wait(row(name, in: "left")); wait(row(folder, in: "left"))
+        drag(row(name, in: "left"), to: row(folder, in: "left").coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)))
+        waitForTransfer(name, "moved")
+        waitGone(row(name, in: "left"), "the file is still in the folder it was moved from")
+        XCTAssertEqual(try? String(contentsOfFile: testHome.appendingPathComponent("\(folder)/\(name)").path, encoding: .utf8), "moved")
+
+        // Into the folder, then onto "..": back where it started.
+        row(folder, in: "left").doubleClick()
+        wait(row(name, in: "left"), "the folder did not open")
+        drag(row(name, in: "left"), to: row("..", in: "left").coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)))
+        eventually("the file was not moved up onto ..") {
+            self.fm.fileExists(atPath: self.testHome.appendingPathComponent(name).path)
+                && !self.fm.fileExists(atPath: self.testHome.appendingPathComponent("\(folder)/\(name)").path)
+        }
+    }
+
+    @MainActor func testDraggingOntoAFolderInTheOtherPaneCopiesItIntoThatFolder() {
+        let name = unique("onto-remote-folder") + ".txt", folder = unique("remote-target")
+        put("copied", at: testHome.appendingPathComponent(name).path)
+        try? fm.createDirectory(atPath: hostFolder("web-1") + "/\(folder)", withIntermediateDirectories: true)
+        launch()
+        openFiles(for: "web-1")
+
+        wait(row(name, in: "left")); wait(row(folder, in: "right"))
+        drag(row(name, in: "left"), to: row(folder, in: "right").coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)))
+        waitForTransfer(name)
+        XCTAssertEqual(try? String(contentsOfFile: hostFolder("web-1") + "/\(folder)/\(name)", encoding: .utf8), "copied")
+        XCTAssertFalse(fm.fileExists(atPath: hostFolder("web-1") + "/\(name)"), "it went to the pane's folder, not the one it was let go on")
+        XCTAssertTrue(fm.fileExists(atPath: testHome.appendingPathComponent(name).path), "a drop between places moved instead of copying")
+    }
+
     /// A large copy reports progress many times a second; the app must stay responsive through it. The
     /// check is by the app's own main-thread stall log (`HangWatchdog`), read after the run.
     @MainActor func testALargeCopyKeepsTheAppResponsive() {

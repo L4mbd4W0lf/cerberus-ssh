@@ -334,8 +334,9 @@ final class FileTabModel: Identifiable {
     /// The rows being dragged out of one of this tab's panes, noted as the drag starts. A drop that
     /// finds this fresh is a drag between the panes, whatever the dropped data looks like: reading
     /// it back would ask a row's file offered for Finder, which for a server file means fetching it
-    /// to this Mac and sending it on.
-    var activeDrag: (pane: UUID, paths: Set<String>, started: Date)?
+    /// to this Mac and sending it on. The rows themselves are kept, so a drop can tell which are folders (one may not
+    /// go into itself) without looking them up again.
+    var activeDrag: (pane: UUID, entries: [FileEntry], started: Date)?
 
     // MARK: Focus and the clipboard
 
@@ -464,15 +465,16 @@ final class FileTabModel: Identifiable {
         await right.disconnect()
     }
 
-    /// Copies `entries` out of `from` into the folder the other pane is showing.
-    func copy(_ entries: [FileEntry], from: FilePaneModel, to destination: FilePaneModel, moving: Bool = false) {
+    /// Copies `entries` out of `from` into the folder the other pane is showing, or into `folder` of it.
+    func copy(_ entries: [FileEntry], from: FilePaneModel, to destination: FilePaneModel, into folder: String? = nil, moving: Bool = false) {
         guard let source = from.backend else { return }
-        copy(entries, using: source, sourceTitle: from.source.title, to: destination, moving: moving)
+        copy(entries, using: source, sourceTitle: from.source.title, to: destination, into: folder, moving: moving)
     }
 
-    /// Copies `entries` from anywhere `source` reaches (a pane, or files dropped from Finder).
+    /// Copies `entries` from anywhere `source` reaches (a pane, or files dropped from Finder) into the folder
+    /// `destination` shows, or into `folder` (a folder row something was dropped on).
     func copy(_ entries: [FileEntry], using source: any FileBackend, sourceTitle: String, to destination: FilePaneModel,
-              conflictPolicy: ConflictChoice? = nil, moving: Bool = false) {
+              into folder: String? = nil, conflictPolicy: ConflictChoice? = nil, moving: Bool = false) {
         guard let target = destination.backend, !destination.path.isEmpty else {
             destination.notice = "\(destination.source.title) is not ready to receive files yet."
             return
@@ -482,7 +484,7 @@ final class FileTabModel: Identifiable {
         queue.enqueue(
             title: what,
             detail: "\(sourceTitle) → \(destination.source.title)" + (moving ? " (move)" : ""),
-            request: TransferRequest(source: source, sources: entries, destination: target, destinationDirectory: destination.path,
+            request: TransferRequest(source: source, sources: entries, destination: target, destinationDirectory: folder ?? destination.path,
                                      conflictPolicy: conflictPolicy, removesSources: moving,
                                      copiesOwnership: UserDefaults.standard.bool(forKey: Self.copyOwnershipKey)),
             onFinish: { [self] _ in
@@ -503,24 +505,44 @@ final class FileTabModel: Identifiable {
     /// from Finder, whose provider names the file's own type (markdown, a PDF, anything).
     nonisolated static let paneItemType = UTType(exportedAs: "com.cerberusssh.pane-item")
 
-    /// A drop onto `destination`: rows from the other pane, or files from Finder.
-    func drop(providers: [NSItemProvider], onto destination: FilePaneModel) -> Bool {
-        CerberusLog.info("files", "drop on the \(destination.source.title) pane: \(providers.count) item(s), types \(providers.map(\.registeredTypeIdentifiers))")
+    /// Whether the rows being dragged may be let go on `folder` of `destination`. Within one place (the same Mac, the
+    /// same server) they may not go into the folder they are already in, nor a folder into itself or one of its own
+    /// folders. Files from Finder may go anywhere.
+    func acceptsDrop(on folder: String, in destination: FilePaneModel) -> Bool {
+        guard let drag = activeDrag, let from = pane(withID: drag.pane), from.source == destination.source else { return true }
+        return !drag.entries.contains { entry in
+            POSIXPath.parent(entry.path) == folder
+                || (entry.isDirectory && !entry.isSymlink && (folder == entry.path || folder.hasPrefix(entry.path + "/")))
+        }
+    }
+
+    /// Whether letting the rows being dragged go on `destination` moves them, as Finder decides between volumes: within
+    /// one place it moves and ⌥ copies, between places it copies and ⌘ moves. Files from Finder are always copied.
+    func dropMoves(onto destination: FilePaneModel) -> Bool {
+        guard let drag = activeDrag, let from = pane(withID: drag.pane) else { return false }
+        let keys = NSEvent.modifierFlags
+        return from.source == destination.source ? !keys.contains(.option) : keys.contains(.command)
+    }
+
+    /// A drop onto `destination`: rows from a pane, or files from Finder. They go into the folder the pane shows, or
+    /// into `folder` when they were let go on a folder row.
+    func drop(providers: [NSItemProvider], onto destination: FilePaneModel, into folder: String? = nil) -> Bool {
+        CerberusLog.info("files", "drop on the \(destination.source.title) pane\(folder == nil ? "" : " (on a folder)"): \(providers.count) item(s), types \(providers.map(\.registeredTypeIdentifiers))")
         guard !providers.isEmpty else { return false }
         let paneType = Self.paneItemType.identifier
 
-        // A drag from the other pane, known from when it started.
+        // A drag from one of these panes, known from when it started.
         // (The drag is forgotten shortly after the mouse button comes up, so this is only ever set for a
         // drag that began in one of these panes and is being let go now.)
         if let drag = activeDrag {
-            activeDrag = nil
-            if let from = pane(withID: drag.pane), from !== destination {
-                let entries = from.entries.filter { drag.paths.contains($0.path) }
-                // Holding ⌘ while letting go moves, as in Finder.
-                copy(entries, from: from, to: destination, moving: NSEvent.modifierFlags.contains(.command))
-                return !entries.isEmpty
+            guard let from = pane(withID: drag.pane), acceptsDrop(on: folder ?? destination.path, in: destination) else {
+                activeDrag = nil
+                return false
             }
-            return false
+            let moving = dropMoves(onto: destination)
+            activeDrag = nil
+            copy(drag.entries, from: from, to: destination, into: folder, moving: moving)
+            return !drag.entries.isEmpty
         }
         activeDrag = nil
         Task { @MainActor in
@@ -532,7 +554,7 @@ final class FileTabModel: Identifiable {
                     urls.append(url)
                 }
             }
-            if !self.drop(strings: strings, urls: urls, onto: destination) {
+            if !self.drop(strings: strings, urls: urls, onto: destination, into: folder) {
                 destination.notice = "Nothing could be read from what was dropped."
             }
         }
@@ -588,8 +610,8 @@ final class FileTabModel: Identifiable {
         }
     }
 
-    /// Handles dropped data: items from the other pane, or files from Finder.
-    func drop(strings: [String], urls: [URL], onto destination: FilePaneModel) -> Bool {
+    /// Handles dropped data: items from the other pane, or files from Finder, into `folder` or the pane's own.
+    func drop(strings: [String], urls: [URL], onto destination: FilePaneModel, into folder: String? = nil) -> Bool {
         CerberusLog.info("files", "dropped \(urls.count) file(s) and \(strings.count) text item(s) on the \(destination.source.title) pane")
         activeDrag = nil
         var accepted = false
@@ -604,7 +626,7 @@ final class FileTabModel: Identifiable {
         for (id, picked) in paths {
             guard let from = pane(withID: id), from !== destination else { continue }
             let entries = from.entries.filter { picked.contains($0.path) }
-            copy(entries, from: from, to: destination)
+            copy(entries, from: from, to: destination, into: folder)
             accepted = accepted || !entries.isEmpty
         }
         let files = urls.filter(\.isFileURL)
@@ -615,7 +637,7 @@ final class FileTabModel: Identifiable {
                 for url in files { if let entry = try? await local.stat(url.path) { entries.append(entry) } }
                 CerberusLog.info("files", "copying \(entries.count) dropped file(s) to \(destination.source.title)")
                 if entries.isEmpty { destination.notice = "The dropped files could not be read." }
-                copy(entries, using: local, sourceTitle: "Finder", to: destination)
+                copy(entries, using: local, sourceTitle: "Finder", to: destination, into: folder)
             }
             accepted = true
         }
@@ -642,8 +664,9 @@ extension FileTabModel {
     /// folder of its own that is removed when the tab closes.
     func itemProvider(for entry: FileEntry, in pane: FilePaneModel) -> NSItemProvider {
         // Called as the drag starts, once per row carried: a row inside the selection carries all of it.
-        activeDrag = (pane.id, pane.selection.contains(entry.path) ? pane.selection : [entry.path], Date())
-        CerberusLog.info("files", "drag started from the \(pane.source.title) pane with \(activeDrag?.paths.count ?? 0) row(s)")
+        let paths = pane.selection.contains(entry.path) ? pane.selection : [entry.path]
+        activeDrag = (pane.id, pane.entries.filter { paths.contains($0.path) }, Date())
+        CerberusLog.info("files", "drag started from the \(pane.source.title) pane with \(activeDrag?.entries.count ?? 0) row(s)")
         forgetDragWhenReleased()
         let provider = NSItemProvider()
         let payload = Data(Self.dragPayload(pane: pane, paths: [entry.path]).utf8)

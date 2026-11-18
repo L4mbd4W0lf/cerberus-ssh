@@ -272,15 +272,7 @@ private struct RowDropArea: View {
             .contentShape(Rectangle())
             .onGeometryChange(for: CGFloat.self, of: { $0.size.height }) { rowHeight = $0 }
             // Inside a folder: the row is boxed.
-            .overlay(
-                RoundedRectangle(cornerRadius: 5)
-                    .stroke(Color.accentColor, lineWidth: 2)
-                    .background(Color.accentColor.opacity(0.12).clipShape(RoundedRectangle(cornerRadius: 5)))
-                    .padding(.horizontal, 4)
-                    .padding(.vertical, 1)
-                    .opacity(mark == .box(row) ? 1 : 0)
-                    .allowsHitTesting(false)
-            )
+            .overlay(DropTargetBox().opacity(mark == .box(row) ? 1 : 0))
             // Between two rows: the line along the bottom edge of the upper one (or the top of the first).
             .overlay(alignment: mark == .lineAbove(row) ? .top : .bottom) {
                 if mark == .lineBelow(row) || mark == .lineAbove(row) {
@@ -292,6 +284,18 @@ private struct RowDropArea: View {
                 target: node, rowHeight: rowHeight, isCollapsed: isCollapsed, reordering: reordering,
                 expand: expand, hoverController: hoverController
             ))
+    }
+}
+
+/// The box round a row that a drop would go into: a folder in the sidebar, or a folder in a file pane.
+struct DropTargetBox: View {
+    var body: some View {
+        RoundedRectangle(cornerRadius: 5)
+            .stroke(Color.accentColor, lineWidth: 2)
+            .background(Color.accentColor.opacity(0.12).clipShape(RoundedRectangle(cornerRadius: 5)))
+            .padding(.horizontal, 4)
+            .padding(.vertical, 1)
+            .allowsHitTesting(false)
     }
 }
 
