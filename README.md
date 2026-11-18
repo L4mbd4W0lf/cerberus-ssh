@@ -56,11 +56,29 @@ Each picture moves between light mode (left of the divider) and dark mode (right
 
 Download `CerberusSSH-<version>.dmg` from the [Releases](../../releases) page, open it and drag CerberusSSH onto Applications. **Requires macOS 26 or later** (built and used on 27; 26 compiles but has had less testing).
 
-Builds that are not notarised are refused by macOS until you clear the quarantine flag, once:
+### Opening it the first time
 
-```
-xattr -dr com.apple.quarantine /Applications/CerberusSSH.app
-```
+> **Notice:** pre-release builds are not notarised by Apple yet. The app is built from this repository, but macOS has not scanned it, so the first time you open it macOS refuses with a message such as *"CerberusSSH" Not Opened* or *Apple could not verify "CerberusSSH" is free of malware*. This is expected, and you only need to deal with it once per download.
+
+1. **Check the download (optional, recommended).** Each release lists the SHA-256 of its files. Compare it with yours:
+
+   ```
+   shasum -a 256 ~/Downloads/CerberusSSH-<version>.dmg
+   ```
+
+2. **Let macOS open it,** in either of these ways:
+
+   - **Terminal:** clear the quarantine flag macOS put on the download, then open the app as usual:
+
+     ```
+     xattr -dr com.apple.quarantine /Applications/CerberusSSH.app
+     ```
+
+   - **System Settings:** open CerberusSSH once and close the message, then go to System Settings ▸ Privacy & Security, scroll to Security, click **Open Anyway** next to the line about CerberusSSH, and confirm with your password or Touch ID.
+
+3. **Updating:** each new version you download is quarantined again, so repeat step 2 after replacing the app.
+
+Your hosts, keys and settings are not touched by any of this: they live in your user folder and the Keychain, not inside the app.
 
 ## Building
 
