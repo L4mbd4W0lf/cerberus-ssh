@@ -144,12 +144,6 @@ struct CerberusSSHApp: App {
         }
         .defaultSize(width: 860, height: 660)
 
-        // The licence and the third-party notices.
-        Window("Acknowledgements", id: AcknowledgementsWindow.id) {
-            AcknowledgementsView()
-        }
-        .defaultSize(width: 680, height: 560)
-
         // Every port forward, with a switch on each.
         Window("Port Forwards", id: ForwardsWindowID.id) {
             ForwardsWindow()

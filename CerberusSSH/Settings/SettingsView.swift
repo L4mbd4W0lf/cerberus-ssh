@@ -11,7 +11,7 @@ import SwiftUIIntrospect
 /// The Settings categories, so the app can open the window on a particular one.
 enum SettingsTab: String, CaseIterable, Identifiable, Equatable {
     case backup, identities, keys, knownHosts, appearance, behaviour, snippets,
-        recordings, connection, advanced
+        recordings, connection, advanced, about
 
     var id: Self { self }
 
@@ -27,6 +27,7 @@ enum SettingsTab: String, CaseIterable, Identifiable, Equatable {
         case .recordings: "Recordings"
         case .connection: "Connection"
         case .advanced: "Advanced"
+        case .about: "About"
         }
     }
 
@@ -42,6 +43,7 @@ enum SettingsTab: String, CaseIterable, Identifiable, Equatable {
         case .recordings: "record.circle"
         case .connection: "network"
         case .advanced: "gearshape.2"
+        case .about: "info.circle"
         }
     }
 }
@@ -76,6 +78,9 @@ private final class SidebarLock {
 struct SettingsView: View {
     @Environment(AppModel.self) private var app
     @State private var sidebarLock = SidebarLock()
+    /// The window opens with the keyboard in the sidebar, as System Settings does. Left to itself it went to the first
+    /// control of the pane, which for About is a link, shown with a focus ring.
+    @FocusState private var sidebarFocused: Bool
 
     private var sidebarWidth: CGFloat = 160
     /// The list wants an optional selection; there is always one category chosen.
@@ -94,6 +99,7 @@ struct SettingsView: View {
                     .accessibilityIdentifier("settings-tab-\(tab.rawValue)")
             }
             .listStyle(.sidebar)
+            .focused($sidebarFocused)
             .toolbar(removing: .sidebarToggle)
             .navigationSplitViewColumnWidth(sidebarWidth)
         } detail: {
@@ -114,6 +120,8 @@ struct SettingsView: View {
             }
         }
         .frame(minWidth: 880, idealWidth: 880, minHeight: 600, idealHeight: 600)
+        // After the window has given the pane the keyboard, which it does once it is shown.
+        .task { await Task.yield(); sidebarFocused = true }
     }
 
     @ViewBuilder
@@ -129,6 +137,7 @@ struct SettingsView: View {
         case .recordings: RecordingsSettings()
         case .connection: ConnectionSettings()
         case .advanced: AdvancedSettings()
+        case .about: AboutSettings()
         }
     }
 

@@ -5,7 +5,7 @@ final class SettingsTests: CerberusUITestCase {
         launch()
         openSettings()
         wait(settingsTab("Advanced"), "the sidebar never showed its categories")
-        for tab in ["Backup", "Identities", "Keys", "Known Hosts", "Appearance", "Behaviour", "Snippets", "Recordings", "Connection", "Advanced"] {
+        for tab in ["Backup", "Identities", "Keys", "Known Hosts", "Appearance", "Behaviour", "Snippets", "Recordings", "Connection", "Advanced", "About"] {
             // The sidebar fills in as the window settles, so each is waited for rather than looked for once.
             XCTAssertTrue(settingsTab(tab).waitForExistence(timeout: 5), "no \(tab) category")
         }

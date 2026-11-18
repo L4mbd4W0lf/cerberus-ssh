@@ -1,20 +1,21 @@
 # Third-party notices
 
-CerberusSSH is licensed under the Apache License 2.0 (see `LICENSE`). It is built on the following software, each under its own licence. The Apache-2.0 components are covered by the text in `LICENSE`; their notices, and the MIT licence of SwiftTerm, follow. Not every component is linked into every build (some are only used by tools or optional features).
+CerberusSSH is licensed under the Apache License 2.0 (see `LICENSE`). It is built on the following software, each under its own licence. The Apache-2.0 components are covered by the text in `LICENSE`; their notices, and the MIT licences of SwiftTerm and SwiftUIIntrospect, follow. Not every component is linked into every build (some are only used by tools or optional features).
 
 | Component | Version | Licence | From |
 |---|---|---|---|
 | swift-nio-ssh (modified: see "swift-nio-ssh: changes made" below) | 0.15.0 | Apache-2.0 | https://github.com/apple/swift-nio-ssh |
 | swift-nio | 2.104.0 | Apache-2.0 | https://github.com/apple/swift-nio |
 | swift-crypto (bundles a copy of BoringSSL, see below) | 4.5.2 | Apache-2.0 | https://github.com/apple/swift-crypto |
-| swift-asn1 | 1.7.4 | Apache-2.0 | https://github.com/apple/swift-asn1 |
+| swift-asn1 | 1.7.3 | Apache-2.0 | https://github.com/apple/swift-asn1 |
 | swift-atomics | 1.3.1 | Apache-2.0 | https://github.com/apple/swift-atomics |
 | swift-collections | 1.7.3 | Apache-2.0 | https://github.com/apple/swift-collections |
 | swift-system | 1.8.1 | Apache-2.0 | https://github.com/apple/swift-system |
-| swift-argument-parser | 1.8.2 | Apache-2.0 | https://github.com/apple/swift-argument-parser |
-| swift-png | 4.5.1 | Apache-2.0 | https://github.com/tayloraswift/swift-png |
-| h | 1.0.1 | Apache-2.0 | https://github.com/rarestype/h |
+| swift-argument-parser (only in SwiftTerm's termcast tool, not in the app) | 1.8.2 | Apache-2.0 | https://github.com/apple/swift-argument-parser |
+| swift-png (only in SwiftTerm on Linux, Windows and Android, not in the app) | 4.5.1 | Apache-2.0 | https://github.com/tayloraswift/swift-png |
+| h (with swift-png, not in the app) | 1.0.1 | Apache-2.0 | https://github.com/rarestype/h |
 | SwiftTerm | 1.99.0 | MIT | https://github.com/migueldeicaza/SwiftTerm |
+| SwiftUIIntrospect | 27.1.0 | MIT | https://github.com/siteline/swiftui-introspect |
 
 The versions are those the app was built with when this file was written.
 
@@ -57,6 +58,32 @@ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
 LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+```
+
+---
+
+## SwiftUIIntrospect (MIT)
+
+```
+Copyright 2019 Timber Software
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 ```
 
 ---

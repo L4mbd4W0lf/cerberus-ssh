@@ -82,10 +82,9 @@ struct WorkspaceCommands: Commands {
                 .keyboardShortcut(.help)
         }
 
-        // The app menu's "About CerberusSSH", with the credits added, and the licences beside it.
+        // The app menu's "About CerberusSSH": Settings ▸ About, with the libraries and the licences.
         CommandGroup(replacing: .appInfo) {
-            Button("About CerberusSSH") { AboutPanel.show() }
-            Button("Acknowledgements…") { openWindow(id: AcknowledgementsWindow.id) }
+            Button("About CerberusSSH") { app.settingsTab = .about; openSettings() }
         }
 
         CommandGroup(replacing: .newItem) {
