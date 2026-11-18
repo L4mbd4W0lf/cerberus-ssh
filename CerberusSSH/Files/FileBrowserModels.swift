@@ -206,6 +206,9 @@ final class TransferJob: Identifiable {
     let id = UUID()
     let title: String
     let detail: String
+    /// Shown in the transfers list: files going from one place to another. A copy or move within one place (the
+    /// same Mac, the same server) is not a transfer and is left out; it is gone from the queue once it is done.
+    let isListed: Bool
     fileprivate(set) var state = State.waiting
     fileprivate(set) var progress = TransferProgress() {
         didSet { rate.add(transferred: progress.bytesDone - min(progress.bytesDone, progress.bytesResumed), at: Date()) }
@@ -215,11 +218,20 @@ final class TransferJob: Identifiable {
     fileprivate let onFinish: @MainActor (TransferJob) async -> Void
     fileprivate var task: Task<Void, Never>?
 
-    fileprivate init(title: String, detail: String, request: TransferRequest, onFinish: @escaping @MainActor (TransferJob) async -> Void) {
-        self.title = title; self.detail = detail; self.request = request; self.onFinish = onFinish
+    fileprivate init(title: String, detail: String, isListed: Bool, request: TransferRequest, onFinish: @escaping @MainActor (TransferJob) async -> Void) {
+        self.title = title; self.detail = detail; self.isListed = isListed; self.request = request; self.onFinish = onFinish
     }
 
     var isFinished: Bool { if case .waiting = state { false } else if case .running = state { false } else { true } }
+
+    /// What went wrong, if something did: the failure, or the first item that did not copy.
+    var problem: String? {
+        switch state {
+        case .failed(let message): message
+        case .finished(let summary): summary.failures.first.map { "\($0.path): \($0.message)" }
+        default: nil
+        }
+    }
 }
 
 /// A name that is already taken, waiting for the person to say what to do.
@@ -233,11 +245,18 @@ struct ConflictPrompt: Identifiable {
 @MainActor
 @Observable
 final class TransferQueue {
-    private(set) var jobs: [TransferJob] = []
+    /// Everything waiting, running or done, transfers or not (see ``TransferJob/isListed``).
+    private var all: [TransferJob] = []
     private(set) var prompts: [ConflictPrompt] = []
     @ObservationIgnored private var runner: Task<Void, Never>?
 
+    /// The transfers, as the transfers list shows them; the counts below are of these.
+    var jobs: [TransferJob] { all.filter(\.isListed) }
+
     var activeCount: Int { jobs.filter { !$0.isFinished }.count }
+
+    /// Everything still to finish, transfers or not: what closing the tab would cancel.
+    var unfinishedCount: Int { all.filter { !$0.isFinished }.count }
 
     /// How far along the transfers in progress are, as one figure; nil while that is not yet known
     /// (a transfer being planned), which the status bar shows as a spinner.
@@ -260,13 +279,14 @@ final class TransferQueue {
         }.count
     }
 
-    func enqueue(title: String, detail: String, request: TransferRequest, onFinish: @escaping @MainActor (TransferJob) async -> Void) {
-        jobs.append(TransferJob(title: title, detail: detail, request: request, onFinish: onFinish))
+    func enqueue(title: String, detail: String, isListed: Bool = true, request: TransferRequest,
+                 onFinish: @escaping @MainActor (TransferJob) async -> Void) {
+        all.append(TransferJob(title: title, detail: detail, isListed: isListed, request: request, onFinish: onFinish))
         if runner == nil { runner = Task { await self.drain() } }
     }
 
     private func drain() async {
-        while let job = jobs.first(where: { $0.state == .waiting }) {
+        while let job = all.first(where: { $0.state == .waiting }) {
             await run(job)
         }
         runner = nil
@@ -295,6 +315,7 @@ final class TransferQueue {
         }
         job.task = task
         await task.value
+        if !job.isListed { all.removeAll { $0 === job } }
         await job.onFinish(job)
     }
 
@@ -316,10 +337,10 @@ final class TransferQueue {
         job.task?.cancel()
     }
 
-    func clearFinished() { jobs.removeAll { $0.isFinished } }
+    func clearFinished() { all.removeAll { $0.isFinished } }
 
     func cancelAll() {
-        for job in jobs where !job.isFinished { cancel(job) }
+        for job in all where !job.isFinished { cancel(job) }
     }
 }
 
@@ -349,7 +370,7 @@ final class FileTabModel: Identifiable {
     struct Clipboard {
         var entries: [FileEntry]
         var backend: any FileBackend
-        var sourceTitle: String
+        var source: FilePaneModel.Source
         var folder: String
     }
     var clipboard: Clipboard?
@@ -375,7 +396,7 @@ final class FileTabModel: Identifiable {
     func copySelection(of pane: FilePaneModel) {
         let chosen = pane.selectedEntries
         guard let backend = pane.backend, !chosen.isEmpty else { return }
-        clipboard = Clipboard(entries: chosen, backend: backend, sourceTitle: pane.source.title, folder: pane.path)
+        clipboard = Clipboard(entries: chosen, backend: backend, source: pane.source, folder: pane.path)
     }
 
     /// ⌘V: copies what was set aside into the folder `pane` shows. Into the folder the files came from it keeps
@@ -384,9 +405,9 @@ final class FileTabModel: Identifiable {
     /// aside is spent.
     func paste(into pane: FilePaneModel, moving: Bool = false) {
         guard let clip = clipboard else { return }
-        let sameFolder = clip.folder == pane.path && clip.sourceTitle == pane.source.title
+        let sameFolder = clip.folder == pane.path && clip.source == pane.source
         if moving && sameFolder { return }   // already there
-        copy(clip.entries, using: clip.backend, sourceTitle: clip.sourceTitle, to: pane,
+        copy(clip.entries, using: clip.backend, from: clip.source, to: pane,
              conflictPolicy: sameFolder && !moving ? .keepBoth : nil, moving: moving)
         if moving { clipboard = nil }
     }
@@ -468,12 +489,13 @@ final class FileTabModel: Identifiable {
     /// Copies `entries` out of `from` into the folder the other pane is showing, or into `folder` of it.
     func copy(_ entries: [FileEntry], from: FilePaneModel, to destination: FilePaneModel, into folder: String? = nil, moving: Bool = false) {
         guard let source = from.backend else { return }
-        copy(entries, using: source, sourceTitle: from.source.title, to: destination, into: folder, moving: moving)
+        copy(entries, using: source, from: from.source, to: destination, into: folder, moving: moving)
     }
 
-    /// Copies `entries` from anywhere `source` reaches (a pane, or files dropped from Finder) into the folder
-    /// `destination` shows, or into `folder` (a folder row something was dropped on).
-    func copy(_ entries: [FileEntry], using source: any FileBackend, sourceTitle: String, to destination: FilePaneModel,
+    /// Copies `entries` from anywhere `source` reaches (a pane's place, or files dropped from Finder, `from` nil) into
+    /// the folder `destination` shows, or into `folder` (a folder row something was dropped on). Within one place it is
+    /// not a transfer: it is left out of the transfers list, and a problem with it is said on the pane instead.
+    func copy(_ entries: [FileEntry], using source: any FileBackend, from origin: FilePaneModel.Source?, to destination: FilePaneModel,
               into folder: String? = nil, conflictPolicy: ConflictChoice? = nil, moving: Bool = false) {
         guard let target = destination.backend, !destination.path.isEmpty else {
             destination.notice = "\(destination.source.title) is not ready to receive files yet."
@@ -481,14 +503,17 @@ final class FileTabModel: Identifiable {
         }
         guard !entries.isEmpty else { return }
         let what = entries.count == 1 ? entries[0].name : "\(entries.count) items"
+        let isTransfer = origin != destination.source
         queue.enqueue(
             title: what,
-            detail: "\(sourceTitle) → \(destination.source.title)" + (moving ? " (move)" : ""),
+            detail: "\(origin?.title ?? "Finder") → \(destination.source.title)" + (moving ? " (move)" : ""),
+            isListed: isTransfer,
             request: TransferRequest(source: source, sources: entries, destination: target, destinationDirectory: folder ?? destination.path,
                                      conflictPolicy: conflictPolicy, removesSources: moving,
                                      copiesOwnership: UserDefaults.standard.bool(forKey: Self.copyOwnershipKey)),
-            onFinish: { [self] _ in
+            onFinish: { [self] job in
                 await destination.reload()
+                if !isTransfer, let problem = job.problem { destination.notice = problem }
                 // A move changed the folder the files came from, too.
                 if moving { await other(than: destination).reload() }
             }
@@ -637,7 +662,7 @@ final class FileTabModel: Identifiable {
                 for url in files { if let entry = try? await local.stat(url.path) { entries.append(entry) } }
                 CerberusLog.info("files", "copying \(entries.count) dropped file(s) to \(destination.source.title)")
                 if entries.isEmpty { destination.notice = "The dropped files could not be read." }
-                copy(entries, using: local, sourceTitle: "Finder", to: destination, into: folder)
+                copy(entries, using: local, from: nil, to: destination, into: folder)
             }
             accepted = true
         }

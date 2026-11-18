@@ -47,7 +47,7 @@ extension AppModel {
     private func liveTotals(in tabs: [WorkspaceTab]) -> (connections: Int, transfers: Int) {
         var connections = 0, transfers = 0
         for tab in tabs {
-            if let files = tab.files { transfers += files.queue.activeCount }
+            if let files = tab.files { transfers += files.queue.unfinishedCount }
             else { connections += tab.layout.leaves.filter { session(withID: $0)?.isLive == true }.count }
         }
         return (connections, transfers)
@@ -73,7 +73,7 @@ extension AppModel {
 
     /// Live connections in a terminal tab, or transfers still running in a file tab.
     func liveWork(in tab: WorkspaceTab) -> Int {
-        if let files = tab.files { return files.queue.activeCount }
+        if let files = tab.files { return files.queue.unfinishedCount }
         return tab.layout.leaves.filter { session(withID: $0)?.isLive == true }.count
     }
 

@@ -71,6 +71,10 @@ final class FilesTests: CerberusUITestCase {
         item.click()
     }
 
+    private var transfersBadge: XCUIElement {
+        app.descendants(matching: .any).matching(identifier: "files-transfers-badge").firstMatch
+    }
+
     private func waitForTransfer(_ title: String, _ outcome: String = "copied") {
         let transfer = app.descendants(matching: .any).matching(identifier: "files-transfer-\(title)").firstMatch
         // The list is in a panel that rises from the status bar's badge: clicking the badge keeps it open.
@@ -307,6 +311,7 @@ final class FilesTests: CerberusUITestCase {
         app.typeKey("v", modifierFlags: .command)
         let stem = (name as NSString).deletingPathExtension
         wait(pane("left").staticTexts["\(stem) (copy).txt"], "pasting in the same pane did not make a copy")
+        XCTAssertFalse(transfersBadge.exists, "a copy within one place was listed as a transfer")
 
         // Move the focus to the other pane with the pane keys and paste there: it lands in the host's folder.
         app.typeKey(.rightArrow, modifierFlags: [.command, .option])
@@ -473,12 +478,12 @@ final class FilesTests: CerberusUITestCase {
         launch()
         openFiles(for: "web-1")
 
-        // Within one place a drop on a folder is a move, done by renaming.
+        // Within one place a drop on a folder is a move, done by renaming, and not a transfer: no badge.
         wait(row(name, in: "left")); wait(row(folder, in: "left"))
         drag(row(name, in: "left"), to: row(folder, in: "left").coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)))
-        waitForTransfer(name, "moved")
         waitGone(row(name, in: "left"), "the file is still in the folder it was moved from")
         XCTAssertEqual(try? String(contentsOfFile: testHome.appendingPathComponent("\(folder)/\(name)").path, encoding: .utf8), "moved")
+        XCTAssertFalse(transfersBadge.exists, "a move within one place was listed as a transfer")
 
         // Into the folder, then onto "..": back where it started.
         row(folder, in: "left").doubleClick()
