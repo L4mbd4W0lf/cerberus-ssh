@@ -599,4 +599,32 @@ final class FilesTests: CerberusUITestCase {
         close.click()
         waitGone(pane("right"), "the file tab did not close")
     }
+
+    @MainActor func testClosingAFileTabConnectedToAServerAsksFirst() {
+        launch()
+        setBehaviour("behaviour-confirm-close", on: true)
+        openFiles(for: "web-1")
+        let tab = mainWindow.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH 'Files:' OR value BEGINSWITH 'Files:'")).firstMatch
+        wait(tab, "no file tab in the tab bar")
+
+        // Connected to web-1 with nothing transferring: closing asks, as closing a live terminal tab does.
+        func closeTab() {
+            tab.rightClick()
+            let close = app.menuItems["Close Tab"]
+            wait(close); close.click()
+        }
+        closeTab()
+        let yes = app.buttons["confirm-close-yes"]
+        wait(yes, "closing a file tab connected to a server did not ask")
+        let named = app.staticTexts.matching(NSPredicate(format: "value CONTAINS 'connection to web-1' OR label CONTAINS 'connection to web-1'")).firstMatch
+        XCTAssertTrue(named.exists, "the question does not say which connection will end")
+        app.typeKey(.escape, modifierFlags: [])   // Escape is Cancel
+        eventually("the question did not go") { !yes.exists }
+        XCTAssertTrue(pane("right").exists, "Cancel closed the file tab")
+
+        closeTab()
+        wait(yes, "closing the file tab did not ask the second time")
+        yes.click()
+        waitGone(pane("right"), "the file tab did not close")
+    }
 }

@@ -2,15 +2,6 @@ import XCTest
 
 /// What happens to tabs when they are closed, and what comes back after a restart (Settings ▸ Behaviour).
 final class LiveWorkspaceTests: CerberusUITestCase {
-    private func setBehaviour(_ identifier: String, on: Bool) {
-        openSettings(tab: "Behaviour")
-        let box = settingsWindow.switches[identifier]   // a grouped form draws a toggle as a switch
-        wait(box, "no switch \(identifier) in Behaviour")
-        if (box.value as? Int ?? 0) != (on ? 1 : 0) { box.click() }
-        XCTAssertEqual(box.value as? Int, on ? 1 : 0)
-        settingsWindow.buttons[XCUIIdentifierCloseWindow].click()
-    }
-
     @MainActor func testClosingATabWithALiveConnectionAsksFirst() throws {
         try startServer()
         launchConnected("live-1")

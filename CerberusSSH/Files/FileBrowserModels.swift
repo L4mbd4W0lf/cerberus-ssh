@@ -466,6 +466,16 @@ final class FileTabModel: Identifiable {
         return "Files: " + (places.isEmpty ? "This Mac" : places.joined(separator: " ⇄ "))
     }
 
+    /// The servers this tab is connected to, once each: both panes on one server share its connection, and This Mac
+    /// is not a connection. What closing the tab would end.
+    var connectedHosts: [String] {
+        var seen: Set<UUID> = [], names: [String] = []
+        for pane in [left, right] where pane.phase == .ready {
+            if case .host(let id, let name) = pane.source, seen.insert(id).inserted { names.append(name) }
+        }
+        return names
+    }
+
     func pane(withID id: UUID) -> FilePaneModel? { [left, right].first { $0.id == id } }
     func other(than pane: FilePaneModel) -> FilePaneModel { pane === left ? right : left }
 

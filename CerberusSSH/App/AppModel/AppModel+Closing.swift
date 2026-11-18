@@ -9,8 +9,8 @@ import CerberusSSHCore
 extension AppModel {
     // MARK: Closing, asking first
 
-    /// Closes a tab from the interface: straight away, or after a question when it holds a live connection (or
-    /// a file tab with transfers running) and Settings ▸ Behaviour says to ask.
+    /// Closes a tab from the interface: straight away, or after a question when it holds a live connection (a file
+    /// tab's to a server, too) or a file tab has transfers running, and Settings ▸ Behaviour says to ask.
     func requestClose(tab id: UUID) {
         guard let tab = tabs.first(where: { $0.id == id }) else { return }
         if BehaviourSettings.confirmsClosing, liveWork(in: tab) > 0 {
@@ -47,8 +47,12 @@ extension AppModel {
     private func liveTotals(in tabs: [WorkspaceTab]) -> (connections: Int, transfers: Int) {
         var connections = 0, transfers = 0
         for tab in tabs {
-            if let files = tab.files { transfers += files.queue.unfinishedCount }
-            else { connections += tab.layout.leaves.filter { session(withID: $0)?.isLive == true }.count }
+            if let files = tab.files {
+                connections += files.connectedHosts.count
+                transfers += files.queue.unfinishedCount
+            } else {
+                connections += tab.layout.leaves.filter { session(withID: $0)?.isLive == true }.count
+            }
         }
         return (connections, transfers)
     }
@@ -71,9 +75,9 @@ extension AppModel {
         }
     }
 
-    /// Live connections in a terminal tab, or transfers still running in a file tab.
+    /// Live connections in a terminal tab, or a file tab's servers and the transfers still running in it.
     func liveWork(in tab: WorkspaceTab) -> Int {
-        if let files = tab.files { return files.queue.unfinishedCount }
+        if let files = tab.files { return files.connectedHosts.count + files.queue.unfinishedCount }
         return tab.layout.leaves.filter { session(withID: $0)?.isLive == true }.count
     }
 
@@ -82,14 +86,27 @@ extension AppModel {
         switch closeRequest {
         case .tab(let id):
             guard let tab = tabs.first(where: { $0.id == id }) else { return nil }
+            if let files = tab.files { return ("Close this file tab?", Self.fileTabEnding(hosts: files.connectedHosts, transfers: files.queue.unfinishedCount)) }
             let n = liveWork(in: tab)
-            if tab.files != nil { return ("Close this file tab?", "\(n) transfer\(n == 1 ? " is" : "s are") still running and will be cancelled.") }
             return ("Close this tab?", n == 1 ? "Its connection will end." : "Its \(n) connections will end.")
         case .pane(let id):
             guard let session = session(withID: id) else { return nil }
             return ("Close this pane?", "Its connection to \(session.title) will end.")
         case nil: return nil
         }
+    }
+
+    /// "Its connection to web-1 will end, and 1 transfer still running will be cancelled."
+    private static func fileTabEnding(hosts: [String], transfers: Int) -> String {
+        var parts: [String] = []
+        if !hosts.isEmpty {
+            let names = ListFormatter.localizedString(byJoining: hosts)
+            parts.append(hosts.count == 1 ? "its connection to \(names) will end" : "its connections to \(names) will end")
+        }
+        if transfers > 0 {
+            parts.append(transfers == 1 ? "1 transfer still running will be cancelled" : "\(transfers) transfers still running will be cancelled")
+        }
+        return parts.joined(separator: ", and ").capitalizedFirst + "."
     }
 
     /// Closes one pane. Closing a tab's last pane closes the tab.

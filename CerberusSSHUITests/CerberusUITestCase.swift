@@ -284,4 +284,14 @@ class CerberusUITestCase: XCTestCase {
             row.click()
         }
     }
+
+    /// Turns a switch in Settings ▸ Behaviour on or off (`behaviour-confirm-close`, …), then closes Settings.
+    func setBehaviour(_ identifier: String, on: Bool) {
+        openSettings(tab: "Behaviour")
+        let box = settingsWindow.switches[identifier]   // a grouped form draws a toggle as a switch
+        wait(box, "no switch \(identifier) in Behaviour")
+        if (box.value as? Int ?? 0) != (on ? 1 : 0) { box.click() }
+        XCTAssertEqual(box.value as? Int, on ? 1 : 0)
+        settingsWindow.buttons[XCUIIdentifierCloseWindow].click()
+    }
 }
