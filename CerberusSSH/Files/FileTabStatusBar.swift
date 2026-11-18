@@ -19,13 +19,17 @@ struct FileTabStatusBar: View {
     private var queue: TransferQueue { tab.queue }
 
     var body: some View {
+        // Each pane's status under its own side, the right one mirrored, and the transfers in the middle, with what is
+        // selected just before them. The sides take equal shares of what is left, so the middle stays centred.
         HStack(spacing: 10) {
-            paneStatus(tab.left)
-            Divider().frame(height: 12)
-            paneStatus(tab.right)
-            Spacer(minLength: 4)
-            if let summary = selectionSummary { Text(summary).foregroundStyle(.secondary).accessibilityIdentifier("files-selection-summary") }
-            if !queue.jobs.isEmpty { transfersBadge }
+            HStack(spacing: 10) {
+                paneStatus(tab.left)
+                Spacer(minLength: 4)
+                if let summary = selectionSummary { Text(summary).foregroundStyle(.secondary).accessibilityIdentifier("files-selection-summary") }
+            }
+            .frame(maxWidth: .infinity)
+            if !queue.jobs.isEmpty { transfersBadge.fixedSize() }
+            paneStatus(tab.right, mirrored: true).frame(maxWidth: .infinity, alignment: .trailing)
         }
         .font(.caption)
         .lineLimit(1)
@@ -34,13 +38,13 @@ struct FileTabStatusBar: View {
         .clipped()
         .background(.bar)
         .contentShape(Rectangle())
-        .overlay(alignment: .bottomTrailing) {
+        // Above the badge, in the middle.
+        .overlay(alignment: .bottom) {
             if isShowingList && !queue.jobs.isEmpty {
                 TransferPanel(queue: queue)
                     .frame(width: 620)
                     .solidPanel(RoundedRectangle(cornerRadius: 8))
                     .shadow(radius: 8, y: 2)
-                    .padding(.trailing, 8)
                     .offset(y: -TabStatusBar.height)
                     .onHover { isOverList = $0; refreshList() }
             }
@@ -78,46 +82,53 @@ struct FileTabStatusBar: View {
 
     // MARK: Panes
 
-    /// Shape and text as well as colour, so status never relies on colour alone.
-    private func paneStatus(_ pane: FilePaneModel) -> some View {
+    /// Shape and text as well as colour, so status never relies on colour alone. Only the place, not the folder: the
+    /// pane shows that above. `mirrored` (the right pane) lays the parts out from the right edge in, icon outermost.
+    private func paneStatus(_ pane: FilePaneModel, mirrored: Bool = false) -> some View {
         HStack(spacing: 5) {
-            switch pane.phase {
-            case .connecting:
-                ProgressView().controlSize(.mini)
-            case .failed:
-                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Color.statusWarning)
-            case .ready:
-                Image(systemName: pane.source == .local ? "laptopcomputer" : "checkmark.circle.fill")
-                    .foregroundStyle(pane.source == .local ? Color.secondary : Color.statusGood)
-            }
-            Text(pane.source.title).fontWeight(.medium)
-            switch pane.phase {
-            case .connecting:
-                Text("connecting…").foregroundStyle(.secondary)
-            case .failed(let message):
-                Text("not connected").foregroundStyle(Color.statusWarning).help(message)
-            case .ready:
-                if let info = pane.info {
-                    Text("connected").foregroundStyle(.secondary)
-                    Text(info.endpoint).foregroundStyle(.secondary).truncationMode(.middle).help("Who and where this connection goes")
-                    if let note = info.note {
-                        Text(note).foregroundStyle(Color.statusWarning)
-                            .help("This server has no SFTP, so its files are listed and copied through its shell: it works, but slowly, one thing at a time.")
+            // The stack takes the mirrored direction for its order; each part keeps left to right for its text, or
+            // "connecting…" would read "…connecting".
+            Group { paneStatusParts(pane) }.environment(\.layoutDirection, .leftToRight)
+        }
+        .environment(\.layoutDirection, mirrored ? .rightToLeft : .leftToRight)
+        .accessibilityElement(children: .combine)
+    }
+
+    @ViewBuilder
+    private func paneStatusParts(_ pane: FilePaneModel) -> some View {
+        switch pane.phase {
+        case .connecting:
+            ProgressView().controlSize(.mini)
+        case .failed:
+            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Color.statusWarning)
+        case .ready:
+            Image(systemName: pane.source == .local ? "laptopcomputer" : "checkmark.circle.fill")
+                .foregroundStyle(pane.source == .local ? Color.secondary : Color.statusGood)
+        }
+        Text(pane.source.title).fontWeight(.medium)
+        switch pane.phase {
+        case .connecting:
+            Text("connecting…").foregroundStyle(.secondary)
+        case .failed(let message):
+            Text("not connected").foregroundStyle(Color.statusWarning).help(message)
+        case .ready:
+            if let info = pane.info {
+                Text("connected").foregroundStyle(.secondary)
+                Text(info.endpoint).foregroundStyle(.secondary).truncationMode(.middle).help("Who and where this connection goes")
+                if let note = info.note {
+                    Text(note).foregroundStyle(Color.statusWarning)
+                        .help("This server has no SFTP, so its files are listed and copied through its shell: it works, but slowly, one thing at a time.")
+                }
+                if let since = info.connectedSince {
+                    TimelineView(.periodic(from: .now, by: 1)) { context in
+                        Text("↑ \(Self.uptime(context.date.timeIntervalSince(since)))").monospacedDigit().help("Time connected")
                     }
-                    if let since = info.connectedSince {
-                        TimelineView(.periodic(from: .now, by: 1)) { context in
-                            Text("↑ \(Self.uptime(context.date.timeIntervalSince(since)))").monospacedDigit().help("Time connected")
-                        }
-                    }
-                    if let fingerprint = info.hostKeyFingerprint {
-                        Image(systemName: "lock.fill").foregroundStyle(.secondary).help("Host key \(fingerprint)")
-                    }
-                } else {
-                    Text(pane.path).foregroundStyle(.secondary).truncationMode(.head)
+                }
+                if let fingerprint = info.hostKeyFingerprint {
+                    Image(systemName: "lock.fill").foregroundStyle(.secondary).help("Host key \(fingerprint)")
                 }
             }
         }
-        .accessibilityElement(children: .combine)
     }
 
     // MARK: Transfers
