@@ -324,8 +324,8 @@ struct FilePaneView: View {
                     .keyboardShortcut(side == "left" ? AppShortcut.moveToRightPane : .moveToLeftPane)
                     .disabled(other.phase != .ready)
                 Divider()
-                if chosen.count == 1, !chosen[0].isDirectory, pane.source != .local {
-                    Button("Edit in Default App", systemImage: "square.and.pencil") { tab.edit(chosen[0], in: pane) }
+                if chosen.count == 1, !chosen[0].isDirectory {
+                    Button("Edit in \(TextEditorChoice.current?.name ?? "Text Editor")", systemImage: "square.and.pencil") { tab.edit(chosen[0], in: pane) }
                 }
                 if chosen.count == 1 {
                     Button("Rename…", systemImage: "pencil") { renaming = chosen[0] }

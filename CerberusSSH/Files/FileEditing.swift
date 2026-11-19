@@ -39,11 +39,17 @@ final class FileEdit: Identifiable {
 }
 
 extension FileTabModel {
-    /// Fetches the file, opens it in the default app and sends back each save.
+    /// Opens the file in the text editor chosen in Settings. A file on this Mac is opened where it is; a server's
+    /// is fetched first, and each save is sent back.
     func edit(_ entry: FileEntry, in pane: FilePaneModel) {
-        guard let backend = pane.backend, !entry.isDirectory else { return }
+        guard !entry.isDirectory else { return }
+        if pane.source == .local {
+            openInEditor(URL(fileURLWithPath: entry.path), name: entry.name, pane: pane)
+            return
+        }
+        guard let backend = pane.backend else { return }
         if let existing = edits.first(where: { $0.session.remotePath == entry.path && $0.state != .downloading }) {
-            NSWorkspace.shared.open(existing.session.localURL)
+            openInEditor(existing.session.localURL, name: entry.name, pane: pane)
             return
         }
         let edit = FileEdit(path: entry.path, backend: backend)
@@ -51,11 +57,23 @@ extension FileTabModel {
         Task { @MainActor in
             do {
                 try await edit.session.start()
-                // Under UI testing the test edits the copy itself, and no app should open.
-                if !UITesting.isActive { NSWorkspace.shared.open(edit.session.localURL) }
             } catch {
                 edits.removeAll { $0.id == edit.id }
                 pane.notice = "Could not fetch \(entry.name) to edit it: \(error.localizedDescription)"
+                return
+            }
+            openInEditor(edit.session.localURL, name: entry.name, pane: pane)
+        }
+    }
+
+    private func openInEditor(_ file: URL, name: String, pane: FilePaneModel) {
+        // Under UI testing the test edits the copy itself, and no app should open.
+        guard !UITesting.isActive else { return }
+        Task { @MainActor in
+            do {
+                try await TextEditorChoice.open(file)
+            } catch {
+                pane.notice = "Could not open \(name) in \(TextEditorChoice.current?.name ?? "a text editor"): \(error.localizedDescription)"
             }
         }
     }

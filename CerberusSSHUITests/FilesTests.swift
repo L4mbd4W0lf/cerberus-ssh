@@ -362,7 +362,10 @@ final class FilesTests: CerberusUITestCase {
         openFiles(for: "web-1")
         wait(row(name, in: "right"))
         row(name, in: "right").rightClick()
-        openMenuItem("Edit in Default App").click()
+        // Named after the editor chosen in Settings, which here is the Mac's default for plain text.
+        let edit = app.menuItems.matching(NSPredicate(format: "title BEGINSWITH 'Edit in '")).firstMatch
+        wait(edit, "no Edit in… in the row's menu")
+        edit.click()
 
         let strip = app.descendants(matching: .any).matching(identifier: "files-edit-\(name)").firstMatch
         wait(strip, "no edit appeared above the status bar")

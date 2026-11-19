@@ -3,6 +3,7 @@ import CerberusTerminal
 import CerberusVault
 import SwiftData
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// How the app acts, as opposed to how it looks (Appearance) or what it stores. Settings that
 /// do not belong anywhere else go here. They are kept in the user defaults.
@@ -124,6 +125,14 @@ struct BehaviourSettingsView: View {
                 .font(.caption).foregroundStyle(.secondary)
             }
 
+            Section("Files") {
+                TextEditorPicker()
+                Text(
+                    "A file tab's Edit opens files in this app, whatever kind of file they are, so a script is opened to be edited and never run."
+                )
+                .font(.caption).foregroundStyle(.secondary)
+            }
+
             Section("Sidebar") {
                 Picker("Sort hosts and folders by", selection: $hostOrder) {
                     HostSortOrderChoices()
@@ -145,5 +154,66 @@ struct BehaviourSettingsView: View {
             }
         }
         .formStyle(.grouped)
+    }
+}
+
+/// The app a file tab edits files in: the Mac's default for plain text, an app that says it edits text, or any app
+/// picked with Other….
+private struct TextEditorPicker: View {
+    @AppStorage(TextEditorChoice.key) private var bundleID = ""
+    @State private var candidates: [TextEditorChoice.App] = []
+    private static let otherTag = "other…"
+
+    /// Blank (the default) when the chosen app is no longer installed, so the picker always has a row to show.
+    private var selection: Binding<String> {
+        Binding(
+            get: { bundleID.isEmpty || NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) == nil ? "" : bundleID },
+            set: { if $0 == Self.otherTag { chooseOther() } else { bundleID = $0 } }
+        )
+    }
+
+    /// The candidates, and the chosen app too when it was picked with Other… and is not one of them.
+    private var shown: [TextEditorChoice.App] {
+        guard !bundleID.isEmpty, !candidates.contains(where: { $0.bundleID == bundleID }), let current = TextEditorChoice.current,
+              current.bundleID == bundleID else { return candidates }
+        return candidates + [current]
+    }
+
+    var body: some View {
+        Picker("Edit files with", selection: selection) {
+            if let fallback = TextEditorChoice.systemDefault {
+                row(fallback, title: "Default (\(fallback.name))").tag("")
+            }
+            Divider()
+            ForEach(shown, id: \.bundleID) { row($0, title: $0.name).tag($0.bundleID) }
+            Divider()
+            Text("Other…").tag(Self.otherTag)
+        }
+        .accessibilityIdentifier("behaviour-text-editor")
+        .onAppear { candidates = TextEditorChoice.candidates }
+    }
+
+    private func row(_ app: TextEditorChoice.App, title: String) -> some View {
+        Label {
+            Text(title)
+        } icon: {
+            Image(nsImage: {
+                let icon = NSWorkspace.shared.icon(forFile: app.url.path)
+                icon.size = NSSize(width: 16, height: 16)
+                return icon
+            }())
+        }
+    }
+
+    private func chooseOther() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.application]
+        panel.directoryURL = URL(fileURLWithPath: "/Applications")
+        panel.prompt = "Choose"
+        panel.message = "Choose the app to edit files in."
+        panel.begin { response in
+            guard response == .OK, let url = panel.url, let app = TextEditorChoice.app(at: url) else { return }
+            bundleID = app.bundleID
+        }
     }
 }
