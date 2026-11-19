@@ -71,20 +71,22 @@ final class FilesTests: CerberusUITestCase {
         item.click()
     }
 
-    private var transfersBadge: XCUIElement {
-        app.descendants(matching: .any).matching(identifier: "files-transfers-badge").firstMatch
+    private var transfersButton: XCUIElement {
+        app.descendants(matching: .any).matching(identifier: "toolbar-transfers").firstMatch
     }
 
     private func waitForTransfer(_ title: String, _ outcome: String = "copied") {
         let transfer = app.descendants(matching: .any).matching(identifier: "files-transfer-\(title)").firstMatch
-        // The list is in a panel that rises from the status bar's badge: clicking the badge keeps it open.
-        let badge = app.descendants(matching: .any).matching(identifier: "files-transfers-badge").firstMatch
-        wait(badge, "no transfers badge in the status bar")
-        if !transfer.exists { badge.click() }
+        // The list is in a popover from the toolbar's transfers button.
+        wait(transfersButton, "no transfers button in the toolbar")
+        if !transfer.exists { transfersButton.click() }
         wait(transfer, "no transfer called \(title) appeared")
         let done = NSPredicate(format: "label CONTAINS %@ OR value CONTAINS %@", outcome, outcome)
         let expectation = XCTNSPredicateExpectation(predicate: done, object: transfer)
         XCTAssertEqual(XCTWaiter().wait(for: [expectation], timeout: 15), .completed, "the transfer of \(title) never reported “\(outcome)”")
+        // Close it, so the keys that follow go to the panes.
+        app.typeKey(.escape, modifierFlags: [])
+        waitGone(transfer, "the transfers list did not close")
     }
 
     @MainActor func testOneHostPutsThisMacOnTheLeftAndTheHostOnTheRight() {
@@ -311,7 +313,7 @@ final class FilesTests: CerberusUITestCase {
         app.typeKey("v", modifierFlags: .command)
         let stem = (name as NSString).deletingPathExtension
         wait(pane("left").staticTexts["\(stem) (copy).txt"], "pasting in the same pane did not make a copy")
-        XCTAssertFalse(transfersBadge.exists, "a copy within one place was listed as a transfer")
+        XCTAssertFalse(transfersButton.exists, "a copy within one place was listed as a transfer")
 
         // Move the focus to the other pane with the pane keys and paste there: it lands in the host's folder.
         app.typeKey(.rightArrow, modifierFlags: [.command, .option])
@@ -330,8 +332,9 @@ final class FilesTests: CerberusUITestCase {
         // Move to the other pane, from the row's menu.
         wait(row(viaMenu, in: "left"))
         row(viaMenu, in: "left").rightClick()
-        let item = app.menuItems.matching(NSPredicate(format: "title BEGINSWITH 'Move to'")).firstMatch
-        wait(item, "no Move to… in the row's menu")
+        // The whole title: with a second display, the Window menu has "Move to <display>" items too.
+        let item = app.menuItems.matching(NSPredicate(format: "title == 'Move to web-1'")).firstMatch
+        wait(item, "no Move to web-1 in the row's menu")
         item.click()
         waitForTransfer(viaMenu, "moved")
         wait(row(viaMenu, in: "right"), "the moved file is not in the other pane")
@@ -478,12 +481,12 @@ final class FilesTests: CerberusUITestCase {
         launch()
         openFiles(for: "web-1")
 
-        // Within one place a drop on a folder is a move, done by renaming, and not a transfer: no badge.
+        // Within one place a drop on a folder is a move, done by renaming, and not a transfer: no transfers button.
         wait(row(name, in: "left")); wait(row(folder, in: "left"))
         drag(row(name, in: "left"), to: row(folder, in: "left").coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)))
         waitGone(row(name, in: "left"), "the file is still in the folder it was moved from")
         XCTAssertEqual(try? String(contentsOfFile: testHome.appendingPathComponent("\(folder)/\(name)").path, encoding: .utf8), "moved")
-        XCTAssertFalse(transfersBadge.exists, "a move within one place was listed as a transfer")
+        XCTAssertFalse(transfersButton.exists, "a move within one place was listed as a transfer")
 
         // Into the folder, then onto "..": back where it started.
         row(folder, in: "left").doubleClick()
@@ -572,7 +575,7 @@ final class FilesTests: CerberusUITestCase {
         eventually("the pane did not return to This Mac") { (self.app.textFields["files-path-left"].value as? String)?.contains("cerberus-uitest") == true }
     }
 
-    @MainActor func testTheStatusBarShowsEachPaneAndTheTransfersBadge() {
+    @MainActor func testTheStatusBarShowsEachPaneAndTheToolbarTheTransfers() {
         let name = unique("bar") + ".txt"
         put("x", at: testHome.appendingPathComponent(name).path)
         launch()
@@ -582,7 +585,7 @@ final class FilesTests: CerberusUITestCase {
         // Each pane's status is one combined element, so look for the host's name in any element's text.
         let named = bar.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS 'web-1' OR value CONTAINS 'web-1'")).firstMatch
         XCTAssertTrue(named.waitForExistence(timeout: 5), "the status bar does not name the host pane")
-        XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "files-transfers-badge").firstMatch.exists, "a transfers badge before any transfer")
+        XCTAssertFalse(transfersButton.exists, "a transfers button before any transfer")
         copy(name, from: "left")
         waitForTransfer(name)
     }

@@ -224,6 +224,9 @@ final class TransferJob: Identifiable {
 
     var isFinished: Bool { if case .waiting = state { false } else if case .running = state { false } else { true } }
 
+    /// A folder, or several items: more than one file goes, so which one is going is worth showing.
+    var hasSeveralFiles: Bool { request.sources.count > 1 || request.sources.contains(where: \.isDirectory) }
+
     /// What went wrong, if something did: the failure, or the first item that did not copy.
     var problem: String? {
         switch state {
@@ -258,10 +261,10 @@ final class TransferQueue {
     /// Everything still to finish, transfers or not: what closing the tab would cancel.
     var unfinishedCount: Int { all.filter { !$0.isFinished }.count }
 
-    /// How far along the transfers in progress are, as one figure; nil while that is not yet known
-    /// (a transfer being planned), which the status bar shows as a spinner.
-    var overallFraction: Double? {
-        let active = jobs.filter { !$0.isFinished }
+    /// How far along the transfers in progress in these queues are, as one figure; nil while that is not yet
+    /// known (a transfer being planned), which the toolbar shows as a spinner.
+    static func overallFraction(of queues: [TransferQueue]) -> Double? {
+        let active = queues.flatMap(\.jobs).filter { !$0.isFinished }
         guard !active.isEmpty else { return nil }
         let total = active.reduce(UInt64(0)) { $0 + $1.progress.bytesTotal }
         guard total > 0 else { return nil }

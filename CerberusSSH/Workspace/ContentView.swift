@@ -817,6 +817,19 @@ struct ContentView: View {
                 .help("Show the connection log")
             }
         }
+        // Last, where Safari keeps its downloads, and on every tab, so a transfer is seen while a terminal is in front.
+        let transfers = windowTransfers
+        if !transfers.isEmpty {
+            ToolbarItem { TransfersButton(sources: transfers) }
+        }
+    }
+
+    /// The window's file tabs that have transfers to list, in tab order, named as their tabs are.
+    private var windowTransfers: [TransfersButton.Source] {
+        windowTabs.compactMap { tab in
+            guard let files = tab.files, !files.queue.jobs.isEmpty else { return nil }
+            return TransfersButton.Source(id: tab.id, name: tab.name ?? files.title, queue: files.queue)
+        }
     }
 
     @ViewBuilder

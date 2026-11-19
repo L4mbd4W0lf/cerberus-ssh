@@ -1,26 +1,13 @@
 import SwiftUI
 import CerberusSSHCore
 
-/// The bar under a file tab, like the one under a terminal tab: how each pane's connection is doing,
-/// and a transfers badge whose list rises above the bar while the pointer is on it, or stays once
-/// clicked. The badge carries a radial progress, so a transfer in progress is seen at a glance.
+/// The bar under a file tab, like the one under a terminal tab: how each pane's connection is doing, and what is
+/// selected. The transfers are in the window's toolbar (``TransfersButton``).
 struct FileTabStatusBar: View {
-    @Environment(\.colorSchemeContrast) private var contrast
     let tab: FileTabModel
 
-    // Drawn by this view rather than as a popover: a popover treats the first click as "outside" and
-    // dismisses itself before the click can pin it (the terminal tab's bar does the same).
-    @State private var isOverBadge = false
-    @State private var isOverList = false
-    @State private var isPinned = false
-    @State private var isShowingList = false
-    @State private var hideTask: Task<Void, Never>?
-
-    private var queue: TransferQueue { tab.queue }
-
     var body: some View {
-        // Each pane's status under its own side, the right one mirrored, and the transfers in the middle, with what is
-        // selected just before them. The sides take equal shares of what is left, so the middle stays centred.
+        // Each pane's status under its own side, the right one mirrored, with what is selected between them.
         HStack(spacing: 10) {
             HStack(spacing: 10) {
                 paneStatus(tab.left)
@@ -28,7 +15,6 @@ struct FileTabStatusBar: View {
                 if let summary = selectionSummary { Text(summary).foregroundStyle(.secondary).accessibilityIdentifier("files-selection-summary") }
             }
             .frame(maxWidth: .infinity)
-            if !queue.jobs.isEmpty { transfersBadge.fixedSize() }
             paneStatus(tab.right, mirrored: true).frame(maxWidth: .infinity, alignment: .trailing)
         }
         .font(.caption)
@@ -38,34 +24,8 @@ struct FileTabStatusBar: View {
         .clipped()
         .background(.bar)
         .contentShape(Rectangle())
-        // Above the badge, in the middle.
-        .overlay(alignment: .bottom) {
-            if isShowingList && !queue.jobs.isEmpty {
-                TransferPanel(queue: queue)
-                    .frame(width: 620)
-                    .solidPanel(RoundedRectangle(cornerRadius: 8))
-                    .shadow(radius: 8, y: 2)
-                    .offset(y: -TabStatusBar.height)
-                    .onHover { isOverList = $0; refreshList() }
-            }
-        }
-        .onChange(of: queue.jobs.isEmpty) { _, empty in if empty { isPinned = false; isShowingList = false } }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("files-status-bar")
-    }
-
-    /// Shows the list while the pointer is on the badge or the list, or it has been pinned; hides it a
-    /// moment after, so crossing the gap between them does not flicker it.
-    private func refreshList() {
-        hideTask?.cancel()
-        if isOverBadge || isOverList || isPinned {
-            isShowingList = true
-        } else {
-            hideTask = Task {
-                try? await Task.sleep(for: .milliseconds(180))
-                if !Task.isCancelled { isShowingList = false }
-            }
-        }
     }
 
     // MARK: Selection
@@ -131,92 +91,9 @@ struct FileTabStatusBar: View {
         }
     }
 
-    // MARK: Transfers
-
-    private var transfersBadge: some View {
-        let active = queue.activeCount
-        return HStack(spacing: 5) {
-            if active > 0 {
-                RadialProgress(fraction: queue.overallFraction)
-                Text(active == 1 ? "1 transfer" : "\(active) transfers")
-                if let fraction = queue.overallFraction { Text("\(Int(fraction * 100))%").monospacedDigit() }
-            } else if queue.problemCount > 0 {
-                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Color.statusWarning)
-                Text("\(queue.problemCount) with problems")
-            } else {
-                Image(systemName: "checkmark.circle.fill").foregroundStyle(Color.statusGood)
-                Text("Transfers done")
-            }
-        }
-        .padding(.horizontal, 6)
-        .padding(.vertical, 1)
-        .background(isPinned ? AnyShapeStyle(Color.accentColor.fill(0.3, contrast)) : AnyShapeStyle(.quaternary), in: Capsule())
-        .contentShape(Capsule())
-        .onHover { isOverBadge = $0; refreshList() }
-        // One click keeps the list open; another closes it.
-        .onTapGesture { isPinned.toggle(); refreshList() }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(active > 0 ? "\(active) transfers in progress. Show the list." : "Transfers finished. Show the list.")
-        .accessibilityAddTraits(.isButton)
-        .accessibilityIdentifier("files-transfers-badge")
-    }
-
     private static func uptime(_ interval: TimeInterval) -> String {
         let total = max(0, Int(interval))
         let (h, m, s) = (total / 3600, (total % 3600) / 60, total % 60)
         return h > 0 ? String(format: "%d:%02d:%02d", h, m, s) : String(format: "%d:%02d", m, s)
-    }
-}
-
-/// A small ring that fills as a transfer goes; a spinner while the amount is not yet known.
-struct RadialProgress: View {
-    let fraction: Double?
-
-    var body: some View {
-        Group {
-            if let fraction {
-                ZStack {
-                    Circle().stroke(.quaternary, lineWidth: 2.5)
-                    Circle().trim(from: 0, to: max(0.02, min(1, fraction)))
-                        .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
-                        .rotationEffect(.degrees(-90))
-                }
-            } else {
-                ProgressView().controlSize(.mini)
-            }
-        }
-        .frame(width: 14, height: 14)
-        .accessibilityHidden(true)
-    }
-}
-
-/// The transfers: what is running, what is waiting and what finished, each with progress and a cancel button.
-private struct TransferPanel: View {
-    let queue: TransferQueue
-
-    var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Text("Transfers").font(.headline)
-                Spacer()
-                Button("Clear Finished") { queue.clearFinished() }
-                    .disabled(!queue.jobs.contains { $0.isFinished })
-                    .accessibilityIdentifier("files-clear-finished")
-            }
-            .padding(.horizontal, 12).padding(.vertical, 8)
-            Divider()
-            ScrollView {
-                VStack(spacing: 0) {
-                    ForEach(queue.jobs) { job in
-                        TransferRow(job: job) { queue.cancel(job) }
-                        Divider()
-                    }
-                }
-            }
-            .frame(maxHeight: 280)
-            .fixedSize(horizontal: false, vertical: true)
-        }
-        .accessibilityElement(children: .contain)
-        .accessibilityIdentifier("files-transfers")
     }
 }

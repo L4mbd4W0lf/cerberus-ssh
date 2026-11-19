@@ -14,8 +14,7 @@ struct FileTabView: View {
             }
             Divider()
             FileEditsStrip(tab: tab)
-            // Above the panes, so the transfers list can rise over them.
-            FileTabStatusBar(tab: tab).zIndex(1)
+            FileTabStatusBar(tab: tab)
         }
         .sheet(item: Binding(get: { tab.queue.prompts.first }, set: { _ in })) { prompt in
             ConflictSheet(prompt: prompt, queue: tab.queue)
@@ -25,7 +24,8 @@ struct FileTabView: View {
     }
 }
 
-/// One transfer: its name, where it is going, progress, speed and a cancel button.
+/// One transfer: where it is going and its name, how far it has got, and a cancel button. For a folder, the file
+/// going now is under the progress bar.
 struct TransferRow: View {
     let job: TransferJob
     let cancel: () -> Void
@@ -34,10 +34,13 @@ struct TransferRow: View {
         HStack(spacing: 10) {
             Image(systemName: symbol).foregroundStyle(color).frame(width: 18)
             VStack(alignment: .leading, spacing: 2) {
-                Text(job.title).lineLimit(1)
+                Text("\(Text(job.detail).foregroundStyle(.secondary))  \(job.title)").lineLimit(1).truncationMode(.middle)
                 Text(status).font(.caption).foregroundStyle(.secondary).lineLimit(1)
                 if job.state == .running {
                     ProgressView(value: job.progress.fraction)
+                    if job.hasSeveralFiles && !job.progress.currentName.isEmpty {
+                        Text(job.progress.currentName).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
+                    }
                 }
             }
             Spacer()
@@ -70,21 +73,22 @@ struct TransferRow: View {
         }
     }
 
+    /// How far it has got; where it is going and what is going are on the line above.
     private var status: String {
         switch job.state {
-        case .waiting: return "\(job.detail) · waiting"
+        case .waiting: return "waiting"
         case .running:
             let p = job.progress
             let done = ByteCountFormatter.string(fromByteCount: Int64(p.bytesDone), countStyle: .file)
             let total = ByteCountFormatter.string(fromByteCount: Int64(p.bytesTotal), countStyle: .file)
-            var text = "\(job.detail) · \(p.currentName) · \(done) of \(total)"
+            var text = "\(done) of \(total)"
             if job.rate.bytesPerSecond > 0 {
                 text += " · " + ByteCountFormatter.string(fromByteCount: Int64(job.rate.bytesPerSecond), countStyle: .file) + "/s"
             }
             if let left = job.rate.secondsRemaining(bytesLeft: p.bytesTotal - min(p.bytesTotal, p.bytesDone), now: Date()) {
                 text += " · " + TransferRate.describe(seconds: left) + " left"
             }
-            return text + " · file \(min(p.filesDone + 1, p.filesTotal)) of \(p.filesTotal)"
+            return job.hasSeveralFiles ? text + " · file \(min(p.filesDone + 1, p.filesTotal)) of \(p.filesTotal)" : text
         case .finished(let s):
             var parts = ["\(s.filesCopied) copied"]
             if s.linksCopied > 0 { parts.append("\(s.linksCopied) link\(s.linksCopied == 1 ? "" : "s")") }
@@ -95,9 +99,9 @@ struct TransferRow: View {
             if s.skippedExisting > 0 { parts.append("\(s.skippedExisting) skipped (already there)") }
             if s.skippedLinks > 0 { parts.append("\(s.skippedLinks) links could not be made") }
             if !s.failures.isEmpty { parts.append("\(s.failures.count) failed: \(s.failures[0].message)") }
-            return "\(job.detail) · " + parts.joined(separator: ", ")
-        case .failed(let message): return "\(job.detail) · \(message)"
-        case .cancelled: return "\(job.detail) · cancelled"
+            return parts.joined(separator: ", ")
+        case .failed(let message): return message
+        case .cancelled: return "cancelled"
         }
     }
 }

@@ -34,16 +34,6 @@ The windows and sheets for port forwarding, and how forwards are presented, need
 - [ ] Redesign the add / edit sheets.
 - [ ] Improve how forwards and their state are shown (sidebar, host inspector, session status bar).
 
-## Move file transfers to a toolbar button
-
-Transfers are shown as a badge in the file tab's status bar (`transfersBadge` in `CerberusSSH/Files/FileTabStatusBar.swift`), with a mini spinner on the tab (`CerberusSSH/Workspace/TabBar.swift`). The badge is easy to miss, so it looks as if nothing is downloading, and the status bar is already cramped with what it shows.
-
-- [ ] A toolbar button whose icon is a ring filling with the total progress of all transfers (reuse `RadialProgress`). Done state when everything has finished; hidden or idle when there have been no transfers.
-- [ ] Clicking it opens a drop-down (popover) listing the files and folders being transferred, with their details: direction, size, progress, speed / time left, waiting / done / failed, and cancel (reuse `TransferPanel` and `TransferRow`).
-- [ ] Take the transfers badge out of the status bar.
-- [ ] Decide: the queue is per file tab (`tab.queue`), so should the button show the current tab's transfers or every tab's in the window?
-- [ ] Keep the VoiceOver label and the `files-transfers-badge` / `files-transfers` identifiers working, or update the UI tests.
-
 ## Paste into every broadcasting pane
 
 With broadcast on, typed keys reach every pane in the group, but pasted text only reaches the focused pane. Find out why. Typed input is copied by `AppModel.mirrorInput` (`CerberusSSH/App/AppModel/AppModel+Broadcast.swift`), hooked up through the pane's `onInput` (`CerberusSSH/Sessions/SessionPane.swift`, `CerberusSSH/Workspace/TabContent.swift`); the paste path (with the multi-line paste confirmation) probably sends straight to the pane's connection without going through `onInput`.
