@@ -179,7 +179,7 @@
 			mainGroup = D52455D3307FA86A00E241BB;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				CB0000000000000000CC0001 /* XCLocalSwiftPackageReference "CerberusKit" */,
+				CB0000000000000000CC0001 /* XCLocalSwiftPackageReference "../cerberus-ssh-kit" */,
 				D5B5893D30A5131700AEC32A /* XCRemoteSwiftPackageReference "swiftui-introspect" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -796,7 +796,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		CB0000000000000000CC0001 /* XCLocalSwiftPackageReference "CerberusKit" */ = {
+		CB0000000000000000CC0001 /* XCLocalSwiftPackageReference "../cerberus-ssh-kit" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = "../cerberus-ssh-kit";
 		};
