@@ -1,6 +1,6 @@
 import XCTest
 
-/// Where a dragged tab lands when dropped on a tab's terminals (spec §4.1): the side nearest the
+/// Where a dragged tab lands when dropped on a tab's terminals: the side nearest the
 /// pointer. The terminal's text is not in the accessibility tree, so each test finds out which pane
 /// is where by clicking into it and asking its shell for its process id.
 final class LiveDropZoneTests: CerberusUITestCase {

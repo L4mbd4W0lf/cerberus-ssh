@@ -14,7 +14,7 @@ struct WorkspaceTab: Identifiable, Equatable {
     var focusedSessionID: UUID
     /// A name the user gave the tab; `nil` shows the focused session's title.
     var name: String?
-    /// Set for a file tab (spec §9.6): two file panes instead of terminals. Its `layout` is a single
+    /// Set for a file tab: two file panes instead of terminals. Its `layout` is a single
     /// leaf with the model's id, which no session has, so every terminal-only path skips it.
     var files: FileTabModel?
 }
@@ -50,7 +50,7 @@ final class AppModel {
     var sessions: [SessionViewModel] = []
     /// Connections that only carry port forwards, by host: no terminal and no tab.
     var tunnels: [SessionViewModel] = []
-    /// Connections that file tabs own (spec §9.6): one per host pane, with no terminal and no tab of their own.
+    /// Connections that file tabs own: one per host pane, with no terminal and no tab of their own.
     var fileConnections: [SessionViewModel] = []
     /// Forwards that are being started on a tunnel that is still connecting.
     var startingForwards: Set<UUID> = []
@@ -88,7 +88,7 @@ final class AppModel {
     var isImportingKnownHosts = false
     var isImportingSSHFolder = false
     var isImportingSSHConfig = false
-    /// An automatic backup is being written (spec §6.6).
+    /// An automatic backup is being written.
     var isAutoBackupRunning = false
     @ObservationIgnored var autoBackupTask: Task<Void, Never>?
     /// Bumped by a UI test's reset so every view starts afresh (always 0 in a real run).
@@ -132,7 +132,7 @@ final class AppModel {
     var isShowingSnippets = false
 
     /// Tabs that are broadcasting, and which of their panes take part. A tab with no entry
-    /// is not broadcasting (spec §8.5).
+    /// is not broadcasting.
     var broadcastSets: [UUID: Set<UUID>] = [:]
 
     var hostKeyStore: (any HostKeyStore)?
@@ -146,7 +146,7 @@ final class AppModel {
     /// The most recent approval, so a jump chain asks once rather than once per hop.
     var lastGateApproval: Date?
 
-    /// Where a backup passphrase is kept, if the user chose to remember one (spec §6.6).
+    /// Where a backup passphrase is kept, if the user chose to remember one.
     let exportPassphrases: any ExportPassphraseStore = UITesting.isActive ? InMemoryExportPassphraseStore() : KeychainExportPassphraseStore()
 
     /// Binds the model to the window's store. Called once, from the root view.

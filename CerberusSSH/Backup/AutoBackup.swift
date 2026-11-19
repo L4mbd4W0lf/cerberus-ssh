@@ -275,7 +275,7 @@ struct AutoBackupSetupSheet: View {
         isWorking = true
         defer { isWorking = false }
         error = nil
-        // Unattended backups include every secret, so turning them on is an export (spec §6.4).
+        // Unattended backups include every secret, so turning them on is an export.
         guard await app.gate(.export, reason: "Turn on automatic backups of your vault", declined: $error) else { return }
         // The folder has to be writable now, not at the first backup.
         let probe = URL(fileURLWithPath: folder).appendingPathComponent(".cerberus-write-test-\(UUID().uuidString)")

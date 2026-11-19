@@ -172,7 +172,7 @@ struct ForwardEditorSheet: View {
 // MARK: - The Forwards window
 
 /// Every port forward of every host, with a switch on each, so a forward can be kept without
-/// being used and turned on when it is wanted (spec §7.7).
+/// being used and turned on when it is wanted.
 struct ForwardsWindow: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(AppModel.self) private var app

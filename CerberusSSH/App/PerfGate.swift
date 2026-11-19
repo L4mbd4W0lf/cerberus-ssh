@@ -5,7 +5,7 @@ import Darwin
 import CerberusModels
 import CerberusSSHCore
 
-/// The performance gate's side inside the app (spec §13.1, M7.3), compiled into the "Perf" build
+/// The performance gate's side inside the app, compiled into the "Perf" build
 /// configuration only: an optimised build with the test hooks, because a debug build measures the
 /// wrong thing. The performance-gate script starts it with a scenario naming a host, a number of sessions
 /// and a command; this opens that many sessions (each in its own tab), types the command into all of

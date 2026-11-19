@@ -1,6 +1,6 @@
 import XCTest
 
-/// The import offered on a fresh install that has a `~/.ssh` (spec §6.5), and the same sheet opened
+/// The import offered on a fresh install that has a `~/.ssh`, and the same sheet opened
 /// from the Welcome screen.
 final class FirstLaunchImportTests: CerberusUITestCase {
     override var seed: String { "empty" }

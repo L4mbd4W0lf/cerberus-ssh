@@ -88,7 +88,7 @@ extension AppModel {
     }
 
     /// Builds a session for `host`, resolving credentials for it and for every jump
-    /// host in its chain. Each hop signs in with its own identity (spec §7.5).
+    /// host in its chain. Each hop signs in with its own identity.
     func makeSession(for host: SSHHost, tunnelOnly: Bool = false) async throws -> SessionViewModel {
         guard let context, let hostKeyStore, host.hasLogin else { throw SSHError.noCredentials }
 
@@ -220,7 +220,7 @@ extension AppModel {
         guard let itemID = sealedID, let vaultItem = vaultItem(id: itemID) else {
             throw SSHError.noCredentials
         }
-        // Only the strictest policy asks before signing in (spec §6.4).
+        // Only the strictest policy asks before signing in.
         guard await gate(.useSecret, reason: "Sign in with the saved credentials for \(identity.name)") else {
             throw SSHError.underlying("Sign-in was cancelled: authentication is required before using stored credentials (Settings ▸ Behaviour).")
         }

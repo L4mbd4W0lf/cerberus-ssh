@@ -1,6 +1,6 @@
 import XCTest
 
-/// A recorded session, opened in the replay viewer (spec §10) and searched.
+/// A recorded session, opened in the replay viewer and searched.
 final class LiveLogReplayTests: CerberusUITestCase {
     /// The recording opens in a window of its own.
     private var viewer: XCUIElement { app.windows["Recording"] }

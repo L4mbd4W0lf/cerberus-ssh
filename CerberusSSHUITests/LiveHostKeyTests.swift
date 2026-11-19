@@ -1,6 +1,6 @@
 import XCTest
 
-/// The first-connection host-key question (spec §7.2), against a server the app has not seen.
+/// The first-connection host-key question, against a server the app has not seen.
 final class LiveHostKeyTests: CerberusUITestCase {
     private var sheet: XCUIElement { mainWindow.sheets.firstMatch }
 
@@ -42,7 +42,7 @@ final class LiveHostKeyTests: CerberusUITestCase {
         XCTAssertFalse(mainWindow.sheets.firstMatch.exists, "the question was asked again for a key it had just trusted")
     }
 
-    // MARK: A key that has changed (spec §7.2)
+    // MARK: A key that has changed
 
     private func startWithAChangedKey() throws {
         try startServer(hostKey: .mismatched)

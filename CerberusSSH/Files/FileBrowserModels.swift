@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 import CerberusModels
 import CerberusSSHCore
 
-/// A connection that a file pane owns, and how to end it. Each file tab dials its own (spec §9.6).
+/// A connection that a file pane owns, and how to end it. Each file tab dials its own.
 struct FileSession: Sendable {
     let backend: any FileBackend
     let close: @Sendable () async -> Void

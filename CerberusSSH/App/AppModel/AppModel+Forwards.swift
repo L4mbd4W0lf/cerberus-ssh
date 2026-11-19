@@ -5,7 +5,7 @@ import CerberusModels
 import CerberusVault
 import CerberusSSHCore
 
-// MARK: - Forwards without a shell (spec §7.7)
+// MARK: - Forwards without a shell
 
 /// Whether a forward is running, and where.
 enum ForwardActivity {
@@ -130,9 +130,9 @@ extension AppModel {
     func clearForwardFailure(_ forward: PortForward) { forwardFailures[forward.id] = nil }
 }
 
-/// Forward plans and switches (spec §7.7).
+/// Forward plans and switches.
 extension AppModel {
-    // MARK: Forwards (spec §7.7)
+    // MARK: Forwards
 
     /// The host's forwards as plans a session can run, in a steady order.
     static func forwardPlans(for host: SSHHost) -> [ForwardPlan] {

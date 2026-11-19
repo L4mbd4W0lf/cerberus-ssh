@@ -2,7 +2,7 @@ import SwiftUI
 import AppKit
 import CerberusModels
 
-/// What the sidebar shows, picked with the navigator bar at its top, as in Xcode (spec §4.1).
+/// What the sidebar shows, picked with the navigator bar at its top, as in Xcode.
 enum SidebarTab: String, CaseIterable, Identifiable {
     case hosts, forwards, favourites
 
@@ -32,7 +32,7 @@ enum SidebarTab: String, CaseIterable, Identifiable {
         }
     }
 
-    /// Filled where a filled symbol exists, so the chosen tab differs by shape as well as colour (spec §13.2).
+    /// Filled where a filled symbol exists, so the chosen tab differs by shape as well as colour.
     var selectedSymbol: String { self == .favourites ? "star.fill" : symbol }
 
     /// For the UI tests: `sidebar-tab-favourites`, `sidebar-tab-hosts`, `sidebar-tab-forwards`.

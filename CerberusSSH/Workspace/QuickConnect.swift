@@ -2,7 +2,7 @@ import SwiftUI
 import AppKit
 import CerberusModels
 
-/// Quick connect (⌘K, spec §4.3): a field in the middle of the toolbar that fuzzy-searches every host, with its matches
+/// Quick connect (⌘K): a field in the middle of the toolbar that fuzzy-searches every host, with its matches
 /// in a dropdown beneath it. Return opens the chosen host in a new tab, ⌥Return splits beside the current pane,
 /// ⇧Return opens a window of its own. Recent and frequent hosts are listed first, before anything is typed.
 enum QuickConnect {

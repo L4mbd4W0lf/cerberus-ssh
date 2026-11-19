@@ -1,7 +1,7 @@
 import XCTest
 import CryptoKit
 
-/// Exporting and importing a vault backup (spec §6.6) through the real save and open panels, with a
+/// Exporting and importing a vault backup through the real save and open panels, with a
 /// round trip through "Erase All Data" to prove what comes back, secrets included.
 final class BackupSheetsTests: CerberusUITestCase {
     private let passphrase = "correct horse battery"
@@ -359,7 +359,7 @@ final class BackupSheetsTests: CerberusUITestCase {
     }
 }
 
-/// Sharing the saved backup passphrase through iCloud Keychain (spec §6.6). A test build has no keychain access group,
+/// Sharing the saved backup passphrase through iCloud Keychain. A test build has no keychain access group,
 /// so the switch is there and off-limits, and says why; the real thing is covered by package tests and by the signed build.
 final class SharedPassphraseTests: CerberusUITestCase {
     @MainActor func testTheShareSwitchIsUnavailableInABuildThatCannotUseICloudKeychain() {

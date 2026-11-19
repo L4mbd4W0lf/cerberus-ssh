@@ -4,7 +4,7 @@ These instructions apply to all contributors and coding agents working in this r
 
 ## Project
 
-CerberusSSH is a native macOS SSH client written in Swift and SwiftUI. It stores hosts, credentials, keys, and session logs locally; secrets are encrypted using a key held in the macOS Keychain. Read `README.md` for product behavior and build instructions. The detailed product and security specification is private and kept outside this repository; consult it when available before making changes that affect behavior.
+CerberusSSH is a native macOS SSH client written in Swift and SwiftUI. It stores hosts, credentials, keys, and session logs locally; secrets are encrypted using a key held in the macOS Keychain. Read `README.md` for product behavior and build instructions.
 
 The app requires macOS 26 or later and the project currently targets Xcode 27 / Swift 6.
 
@@ -17,7 +17,7 @@ git clone git@github.com:L4mbd4W0lf/cerberus-ssh.git
 git clone git@github.com:L4mbd4W0lf/cerberus-ssh-kit.git
 ```
 
-This repository is public. Keep anything private out of it: no kit source, no private specification or notes, no credentials, signing details beyond what the project already needs, or host data. A change may need a commit in each repository; note the pairing in the commit messages.
+This repository is public. Keep anything private out of it: no kit source, no private notes, no credentials, signing details beyond what the project already needs, or host data. A change may need a commit in each repository; note the pairing in the commit messages.
 
 ## Repository map
 
@@ -37,14 +37,14 @@ Choose the narrowest relevant verification for a change, and report what was run
 - The terminal must always use an SSH channel. Do not add local shell or process execution; `Scripts/check-no-local-exec.sh` (in the kit repository) enforces this invariant.
 - Do not add telemetry, accounts, cloud sync, or remote storage. User data is intended to remain on the Mac, except for explicit SSH connections and user-directed backups.
 - Protect passwords, private keys, vault data, and session logs. Avoid logging secrets or exposing them in errors, diagnostics, previews, fixtures, or tests. Follow the existing Keychain, encryption, and secret-wiping patterns.
-- Preserve strict host-key verification behavior: a changed host key must block a connection. Do not weaken cryptographic defaults or silently downgrade algorithms; compatibility changes must follow the specification and existing negotiation behavior.
+- Preserve strict host-key verification behavior: a changed host key must block a connection. Do not weaken cryptographic defaults or silently downgrade algorithms; compatibility changes must follow the existing negotiation behavior.
 - SSH agent forwarding is intentionally not supported. Do not add it.
-- Keep changes focused and consistent with the specification. Update relevant documentation or release notes when user-visible behavior or security properties change.
+- Keep changes focused. Update relevant documentation or release notes when user-visible behavior or security properties change.
 - The SSH dependency (in the kit repository) is locally modified. Preserve its documented patches and licensing notices, and keep the summary of the changes in `THIRD_PARTY_NOTICES.md` accurate.
 
 ## Working practices
 
-- Inspect the relevant implementation, tests, and specification before changing behavior. Prefer extending existing abstractions over introducing parallel mechanisms.
+- Inspect the relevant implementation and tests before changing behavior. Prefer extending existing abstractions over introducing parallel mechanisms.
 - Keep Swift 6 concurrency and sendability requirements intact. Avoid blocking event loops and UI work.
 - Add or update tests for behavior changes, especially parsing, cryptography, authentication, host-key verification, vault handling, and transfer edge cases.
 - Do not commit, revert, or reformat unrelated user changes. Check the working tree before editing and keep the final diff limited to the requested work.

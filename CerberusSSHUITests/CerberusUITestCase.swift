@@ -80,7 +80,7 @@ enum SharedApp {
         return false
     }
 
-    /// A reset that is never acknowledged (spec N36) leaves nothing to look at afterwards, so take a stack sample of
+    /// A reset that is never acknowledged leaves nothing to look at afterwards, so take a stack sample of
     /// the app now and say where it is.
     private static func sampleWedgedApp() {
         guard isRunning else { return }

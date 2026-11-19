@@ -6,7 +6,7 @@ import CerberusVault
 import CerberusSSHCore
 
 /// File tabs: two panes side by side, copying between this Mac and hosts, or between two hosts
-/// with the bytes passing through this Mac (spec §9.6).
+/// with the bytes passing through this Mac.
 extension AppModel {
     /// Opens a file tab for the hosts picked in the sidebar. One host gives this Mac on the left and
     /// the host on the right (so a copy goes to or from the Mac); two hosts give one on each side,
@@ -39,7 +39,7 @@ extension AppModel {
         openFiles(for: [host])
     }
 
-    /// A connection of its own to `hostID` for a file pane to browse and copy over (spec §9.6): it signs
+    /// A connection of its own to `hostID` for a file pane to browse and copy over: it signs
     /// in the same way a terminal does, asks the same host-key and one-time-code questions, and ends
     /// when the pane lets it go.
     func makeFileSession(for hostID: UUID) async throws -> FileSession {

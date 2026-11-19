@@ -19,7 +19,7 @@ extension NodeColor {
 }
 
 /// A folder's colour as a small mark beside a name. Always with the colour's name in the
-/// tooltip, so the colour is never the only thing that says it (spec §13.2).
+/// tooltip, so the colour is never the only thing that says it.
 struct NodeColorMark: View {
     let color: NodeColor
     var width: CGFloat = 3

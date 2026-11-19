@@ -1,6 +1,6 @@
 import XCTest
 
-/// The snippet palette (⇧⌘K, spec §9.4), checked by what each remote shell does with what it is sent.
+/// The snippet palette (⇧⌘K), checked by what each remote shell does with what it is sent.
 final class LiveSnippetTests: CerberusUITestCase {
     /// Each test writes to files of its own. The scratch folder outlives a test, and the test cannot remove what the
     /// remote shell wrote there (the runner is sandboxed), so a name shared with an earlier test would still hold its lines.

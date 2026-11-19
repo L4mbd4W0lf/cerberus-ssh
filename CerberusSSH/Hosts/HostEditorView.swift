@@ -5,7 +5,7 @@ import CerberusModels
 import CerberusVault
 
 /// Create or edit a host: connection, organisation, credentials, jump chain, forwards
-/// and session options (spec §5.2, §4.2).
+/// and session options.
 ///
 /// Secrets are handed straight to the vault and sealed; only the ciphertext is
 /// written to the store.
@@ -467,7 +467,7 @@ struct HostEditorView: View {
 
         let target = host ?? SSHHost()
 
-        // Reject cycles and over-long chains before saving (spec §7.5).
+        // Reject cycles and over-long chains before saving.
         let byID = Dictionary(allHosts.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         if let problem = JumpChainResolver.validate(proposedChain: jumpIDs, for: target, lookup: { byID[$0] }) {
             throw problem

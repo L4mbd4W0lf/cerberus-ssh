@@ -108,7 +108,7 @@ struct HostRow: View {
                     .foregroundStyle(onHighlight ? Color.onHighlight.opacity(0.8) : Color.secondary)
             }
             Spacer(minLength: 4)
-            // Shape as well as colour (spec §13.2); nothing at all for an idle host.
+            // Shape as well as colour; nothing at all for an idle host.
             if status.text != "idle" {
                 Image(systemName: status.symbol)
                     .foregroundStyle(onHighlight ? Color.onHighlight : status.color)

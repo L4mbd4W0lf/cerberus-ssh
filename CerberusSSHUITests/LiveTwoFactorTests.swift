@@ -1,6 +1,6 @@
 import XCTest
 
-/// Sign-in that wants a one-time code as well as the key (spec §7.4), against a real OpenSSH with PAM
+/// Sign-in that wants a one-time code as well as the key, against a real OpenSSH with PAM
 /// and Google Authenticator in a container. Skipped when Docker or its image is not there.
 final class LiveTwoFactorTests: CerberusUITestCase {
     private var totp: UITestSSHD.TOTPServer!

@@ -36,7 +36,7 @@ extension AppModel {
         context.saveLogged()
     }
 
-    /// Deletes logs past the retention settings (spec §10). Runs at launch.
+    /// Deletes logs past the retention settings. Runs at launch.
     func applyRecordingRetention() {
         guard let context else { return }
         let settings = context.fetchLogged(FetchDescriptor<AppSettings>()).first

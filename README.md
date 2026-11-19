@@ -13,7 +13,7 @@ A native macOS SSH client, written in Swift and SwiftUI. It keeps everything on 
 - **Vault and backups.** Passwords and keys are sealed on this Mac. A passphrase-protected `.cerberusvault` file backs up everything, and automatic backups can go to a folder you choose. Import from `~/.ssh` and `~/.ssh/config`.
 - **Organising.** Sidebar tabs for the host/folder tree, port forwards and favourites, each with its own selection. Only Hosts has a bottom bar, with the + menu and filter. The tree sorts by name (A–Z or Z–A), recent or frequent connection, or address, or in a Custom Order you make by dragging folders and hosts into place (dragging works in that order only). Folders with colours (production red, staging amber), tags, a quick-connect field in the middle of the toolbar (⌘K), with a dropdown of matches, and a searchable host picker.
 - **Safety copy before a migration.** When an update has to migrate your catalogue, the old file is first copied to `Migration Backups/` with its version in the name. Settings ▸ Advanced lists them, and can re-migrate from one or delete them.
-- **Accessibility.** Increase Contrast and Reduce Motion are respected. VoiceOver support is not provided and will not be added (see the spec, §13.2).
+- **Accessibility.** Increase Contrast and Reduce Motion are respected. VoiceOver support is not provided and will not be added.
 
 ## Screenshots
 
@@ -127,13 +127,9 @@ The vault, the SSH engine (with SFTP and an ssh-agent client), the data model an
 
 The SSH is [swift-nio-ssh](https://github.com/apple/swift-nio-ssh) (modified, with additions for keyboard-interactive, RSA, older key exchange and agent-signed keys; see [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)); the terminal is [SwiftTerm](https://github.com/migueldeicaza/SwiftTerm). The app never starts a local process: a terminal always runs over an SSH connection (a build step enforces this in the private package).
 
-## Documentation
-
-The detailed specification and project notes are private and kept outside this repository.
-
 ## What is not built
 
-- iCloud sync (left out of version 1; the design is in the spec).
+- iCloud sync (left out of version 1).
 - Agent *forwarding*, which will not be built: anyone with root on the server could use your agent while you are connected. Use jump hosts instead.
 - Developer ID notarisation (waiting for the certificate).
 

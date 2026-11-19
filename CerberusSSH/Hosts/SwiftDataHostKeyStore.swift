@@ -3,7 +3,7 @@ import SwiftData
 import CerberusModels
 import CerberusSSHCore
 
-/// SwiftData-backed trust store (spec §5.4).
+/// SwiftData-backed trust store.
 ///
 /// `ModelContext` is not `Sendable` and SwiftData containers are not safe to use
 /// from arbitrary threads, so every access is funnelled onto the main actor and

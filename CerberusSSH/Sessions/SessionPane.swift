@@ -7,14 +7,14 @@ import SwiftData
 import SwiftUI
 
 /// A terminal pane. (The status bar belongs to the tab: ``TabStatusBar``.) The terminal is constructed from a
-/// ``TerminalTransport``, so it can only ever show an SSH channel (spec §8.1).
+/// ``TerminalTransport``, so it can only ever show an SSH channel.
 struct SessionPane: View {
     @Bindable var session: SessionViewModel
     /// Whether this pane has the keyboard, and whether to draw a ring to show it
     /// (only worth showing when the tab has more than one pane).
     var isFocused = true
     var showsFocusRing = false
-    /// Broadcast input (spec §8.5): whether this tab is broadcasting, and whether this pane
+    /// Broadcast input: whether this tab is broadcasting, and whether this pane
     /// is one of the panes that take part.
     var isBroadcasting = false
     var inBroadcastGroup = false
@@ -31,7 +31,7 @@ struct SessionPane: View {
     @Environment(\.colorScheme) private var colorScheme
 
     /// The host's theme, else the app-wide one, with the font, cursor and scrollback from
-    /// Settings (spec §4.5).
+    /// Settings.
     private var appearance: TerminalAppearance {
         let settings = allSettings.first
         return TerminalAppearance(
@@ -336,7 +336,7 @@ struct SessionPane: View {
                 .textSelection(.enabled)
                 .fixedSize(horizontal: false, vertical: true)
             Text(
-                "No connection was attempted past the handshake, so nothing was trusted or sent. The server's settings (or a newer server key) need to change; see the spec's note on algorithm support."
+                "No connection was attempted past the handshake, so nothing was trusted or sent. The server's settings (or a newer server key) need to change."
             )
             .font(.caption)
             .foregroundStyle(.secondary)
@@ -507,7 +507,7 @@ extension HostKeyPrompt: @retroactive Identifiable {
     public var id: String { "\(hostPattern)#\(fingerprintSHA256)" }
 }
 
-/// First-use trust decision (spec §7.2). Shows what OpenSSH shows, and requires an
+/// First-use trust decision. Shows what OpenSSH shows, and requires an
 /// explicit click: there is no default button, so Return cannot trust a key by accident.
 struct HostKeyPromptSheet: View {
     let hostName: String

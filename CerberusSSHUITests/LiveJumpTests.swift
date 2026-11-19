@@ -1,6 +1,6 @@
 import XCTest
 
-/// A host reached through another (spec §7.5), here the test server through itself.
+/// A host reached through another, here the test server through itself.
 final class LiveJumpTests: CerberusUITestCase {
     @MainActor func testAHostWithAJumpHostConnectsThroughItAndTypingReachesIt() throws {
         try startServer()

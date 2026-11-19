@@ -3,7 +3,7 @@ import CerberusModels
 
 /// The sidebar's Port Forwards tab: every forward that is switched on,
 /// each with what it is doing. Starting one needs no terminal: with no session to the host open,
-/// a connection is made for the forward alone (spec §7.7).
+/// a connection is made for the forward alone.
 struct SidebarForwardRows: View {
     let entries: [(host: SSHHost, forward: PortForward)]
     var selection: Set<UUID> = []

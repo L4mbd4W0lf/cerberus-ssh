@@ -173,7 +173,7 @@ final class SettingsTests: CerberusUITestCase {
 
 final class IdentityUnusedMarkTests: CerberusUITestCase {
     /// An identity no host uses is marked with a warning, and nothing offers to delete them in bulk or does it
-    /// by itself (spec F10): removing a credential is one identity at a time, by choice.
+    /// by itself: removing a credential is one identity at a time, by choice.
     @MainActor func testAnIdentityNoHostUsesIsMarkedAndNeverBulkDeleted() {
         launch()
         openSettings(tab: "Identities")

@@ -6,7 +6,7 @@ import CerberusModels
 import CerberusVault
 
 extension UTType {
-    /// `.cerberusvault`, a passphrase-sealed backup (spec §6.6).
+    /// `.cerberusvault`, a passphrase-sealed backup.
     static let cerberusVault = UTType(filenameExtension: "cerberusvault") ?? .data
 }
 
@@ -232,7 +232,7 @@ struct ExportBackupSheet: View {
         isWorking = true
         defer { isWorking = false }
 
-        // Exporting is a bulk secret reveal (spec §6.4).
+        // Exporting is a bulk secret reveal.
         if options.includeSecrets {
             guard await app.gate(.export, reason: "Export your vault secrets", declined: $error) else { return }
         }

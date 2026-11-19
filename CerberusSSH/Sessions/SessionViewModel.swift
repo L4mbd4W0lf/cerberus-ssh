@@ -18,7 +18,7 @@ enum ConnectionLogSettings {
     static var captureLevel: Int { max(1, level) }
 }
 
-/// A port forward configured for a host (spec §5.5, §7.7), ready to start on a session.
+/// A port forward configured for a host, ready to start on a session.
 struct ForwardPlan: Identifiable, Equatable {
     var id: UUID
     var kind: ForwardKind
@@ -47,7 +47,7 @@ struct ForwardPlan: Identifiable, Equatable {
 ///
 /// The view model owns the session, not the terminal view: hiding or replacing the
 /// view leaves the connection running. A connection is single-use, so reconnecting
-/// builds a new ``SSHConnection`` and the terminal rebinds to it (spec §7.8).
+/// builds a new ``SSHConnection`` and the terminal rebinds to it.
 @MainActor
 @Observable
 final class SessionViewModel: Identifiable {
@@ -439,7 +439,7 @@ final class SessionViewModel: Identifiable {
         scheduleAutoReconnect(after: reason)
     }
 
-    /// Spec §7.8: exponential backoff, jittered, ten attempts, and never after an
+    /// Exponential backoff, jittered, ten attempts, and never after an
     /// authentication or host-key failure.
     private func scheduleAutoReconnect(after reason: DisconnectReason) {
         // A shell that ended by itself is not a lost connection: nobody wants the session they just ended to come back.

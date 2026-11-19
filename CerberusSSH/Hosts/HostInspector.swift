@@ -3,7 +3,7 @@ import SwiftData
 import CerberusModels
 
 /// The right-hand inspector (⌥⌘I): details of the selected host, with connect and
-/// edit buttons. With several hosts selected it offers bulk edit instead (spec §4.2).
+/// edit buttons. With several hosts selected it offers bulk edit instead.
 struct HostInspector: View {
     let hosts: [SSHHost]
     let onEdit: (SSHHost) -> Void

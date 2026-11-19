@@ -17,7 +17,7 @@ extension AppModel {
     }
 
     /// Asks for Touch ID (or the account password) if the policy in Settings says this action
-    /// needs it (spec §6.4). A Mac with nothing set up to ask with is treated as approved.
+    /// needs it. A Mac with nothing set up to ask with is treated as approved.
     func gate(_ action: GatedAction, reason: String) async -> Bool {
         if UITesting.isActive { return true }  // tests can't answer Touch ID
         let policy = settingsRecord?.gatePolicy ?? .default
@@ -40,7 +40,7 @@ extension AppModel {
         return approved
     }
 
-    /// Explicit recovery from a host-key mismatch (spec §7.2): forgets the pinned key
+    /// Explicit recovery from a host-key mismatch: forgets the pinned key
     /// behind the biometric gate, then reconnects so the new key goes through the
     /// normal first-use prompt. There is no way to connect past a mismatch without it.
     func replaceStoredHostKey(for session: SessionViewModel) async {

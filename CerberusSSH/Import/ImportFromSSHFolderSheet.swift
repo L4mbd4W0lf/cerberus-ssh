@@ -3,7 +3,7 @@ import SwiftData
 import CerberusModels
 import CerberusVault
 
-/// Offers to bring keys and trusted hosts in from `~/.ssh` (spec §6.5). Shown once on a fresh
+/// Offers to bring keys and trusted hosts in from `~/.ssh`. Shown once on a fresh
 /// install that has something there, and on request from the Welcome screen. It only reads
 /// the folder; nothing is changed or removed from it.
 struct ImportFromSSHFolderSheet: View {

@@ -2,7 +2,7 @@ import SwiftUI
 import CerberusModels
 import CerberusSSHCore
 
-/// The one status bar under a tab's terminals (spec §4.4a). It describes the focused pane;
+/// The one status bar under a tab's terminals. It describes the focused pane;
 /// when the tab is split it also shows how many panes there are, and hovering that lists
 /// every pane with its details.
 struct TabStatusBar: View {

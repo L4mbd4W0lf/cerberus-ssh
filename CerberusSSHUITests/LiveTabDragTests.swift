@@ -1,6 +1,6 @@
 import XCTest
 
-/// Moving tabs about by dragging them (spec §4.4a): reorder, merge into another tab's panes, and
+/// Moving tabs about by dragging them: reorder, merge into another tab's panes, and
 /// back into a window from one of its own. A connection must survive every one of them.
 final class LiveTabDragTests: CerberusUITestCase {
     private func connectTwo() {

@@ -1,6 +1,6 @@
 import XCTest
 
-/// Importing hosts from an OpenSSH config file (spec §6.5), against a throwaway `~/.ssh`.
+/// Importing hosts from an OpenSSH config file, against a throwaway `~/.ssh`.
 final class ImportSSHConfigTests: CerberusUITestCase {
     private var sheet: XCUIElement { mainWindow.sheets.firstMatch }
 

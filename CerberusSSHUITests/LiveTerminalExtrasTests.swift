@@ -1,7 +1,7 @@
 import XCTest
 
 /// What a person does with a terminal besides typing: ⌘-clicking a link, searching its scrollback, and pasting
-/// something that runs more than one line (spec §8.6).
+/// something that runs more than one line.
 final class LiveTerminalExtrasTests: CerberusUITestCase {
     private var terminal: XCUIElement {
         mainWindow.textViews.matching(NSPredicate(format: "label BEGINSWITH 'Terminal'")).firstMatch

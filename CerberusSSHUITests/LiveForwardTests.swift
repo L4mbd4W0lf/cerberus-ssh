@@ -1,6 +1,6 @@
 import XCTest
 
-/// A port forward started from the sidebar, with no terminal open (spec §7.7), carrying real traffic.
+/// A port forward started from the sidebar, with no terminal open, carrying real traffic.
 final class LiveForwardTests: CerberusUITestCase {
     @MainActor func testStartingAForwardOpensItsPortAndStoppingClosesIt() throws {
         try startServer()

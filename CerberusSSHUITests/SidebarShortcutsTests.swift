@@ -77,7 +77,7 @@ final class SidebarShortcutsTests: CerberusUITestCase {
         wait(app.descendants(matching: .any).matching(identifier: "files-pane-right").firstMatch, "⇧⌘S did not open a file tab")
 
         // Close the tab again before the test ends. Left open with the host still selected, it made the next test's
-        // reset of the app never finish (see N36 in the spec); the app's own "Erase All Data" does not show it.
+        // reset of the app never finish; the app's own "Erase All Data" does not show it.
         app.typeKey("w", modifierFlags: .command)
         eventually("the file tab did not close") { !self.app.descendants(matching: .any).matching(identifier: "files-pane-right").firstMatch.exists }
     }

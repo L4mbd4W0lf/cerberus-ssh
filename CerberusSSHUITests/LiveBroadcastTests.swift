@@ -1,6 +1,6 @@
 import XCTest
 
-/// Typing into several panes at once (spec §8.5), checked by what each remote shell does.
+/// Typing into several panes at once, checked by what each remote shell does.
 final class LiveBroadcastTests: CerberusUITestCase {
     @MainActor func testBroadcastSendsWhatIsTypedToEveryPaneAndStopsWhenSwitchedOff() throws {
         try startServer()

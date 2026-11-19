@@ -7,7 +7,7 @@ import UniformTypeIdentifiers
 
 /// Creates or edits an identity: its name, user and saved password or key. Every host
 /// that uses the identity picks the change up the next time it connects, which is what
-/// an identity is for (spec §5.3).
+/// an identity is for.
 struct IdentityEditorSheet: View {
     /// `nil` makes a new identity.
     let identity: Identity?
@@ -242,7 +242,7 @@ struct IdentityEditorSheet: View {
         isSaving = true
         error = nil
         Task {
-            // Replacing a stored secret is as sensitive as showing it (spec §6.4).
+            // Replacing a stored secret is as sensitive as showing it.
             if !isNew, hasNewSecret,
                 !(await app.gate(
                     .editSecret,

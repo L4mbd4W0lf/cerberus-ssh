@@ -5,9 +5,9 @@ import CerberusModels
 import CerberusVault
 import CerberusSSHCore
 
-/// Typing into several panes at once (spec §8.5).
+/// Typing into several panes at once.
 extension AppModel {
-    // MARK: Broadcast input (spec §8.5)
+    // MARK: Broadcast input
 
     func isBroadcasting(tab tabID: UUID) -> Bool { broadcastSets[tabID] != nil }
 

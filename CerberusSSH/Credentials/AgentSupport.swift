@@ -1,7 +1,7 @@
 import SwiftUI
 import CerberusSSHCore
 
-/// Where the app finds the ssh-agent (spec §7.6): the socket set in Settings ▸ Advanced, else the
+/// Where the app finds the ssh-agent: the socket set in Settings ▸ Advanced, else the
 /// `SSH_AUTH_SOCK` this process was started with (which, for an app opened from Finder, is the system
 /// agent that launchd runs).
 enum AgentSettings {

@@ -7,7 +7,7 @@ import SwiftUIIntrospect
 
 /// The Settings window (⌘,): a sidebar of categories beside the one chosen. Backup and import,
 /// the identity list, the trust store, connection logging, and a reset. Everything
-/// that weakens trust or reveals a secret sits behind the biometric gate (spec §6.4).
+/// that weakens trust or reveals a secret sits behind the biometric gate.
 /// The Settings categories, so the app can open the window on a particular one.
 enum SettingsTab: String, CaseIterable, Identifiable, Equatable {
     case backup, identities, keys, knownHosts, appearance, behaviour, snippets,

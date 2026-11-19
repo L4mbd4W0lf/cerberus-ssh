@@ -1,6 +1,6 @@
 import XCTest
 
-/// What happens when a connection is lost rather than closed (spec §7.1): the server's connection
+/// What happens when a connection is lost rather than closed: the server's connection
 /// process is killed from inside the session (`kill -9 $SESSION_SSHD_PID`, which the test server's
 /// session wrapper exports), which looks to the app like a network failure, not a clean exit.
 final class LiveReconnectTests: CerberusUITestCase {

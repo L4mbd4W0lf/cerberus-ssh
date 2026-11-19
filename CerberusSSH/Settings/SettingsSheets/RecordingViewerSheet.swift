@@ -12,7 +12,7 @@ import CerberusVault
 import CerberusTerminal
 
 /// One session recording in a window of its own: replays it with colours, and exports plain text or asciinema
-/// `.cast` (spec §10).
+/// `.cast`.
 struct RecordingViewerSheet: View {
     let entry: RecordingStore.Entry
     let hostName: String

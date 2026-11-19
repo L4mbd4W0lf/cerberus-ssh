@@ -1,6 +1,6 @@
 import XCTest
 
-/// The file tab (spec §9.6): two panes, copies between them, and the clashes a copy meets.
+/// The file tab: two panes, copies between them, and the clashes a copy meets.
 ///
 /// The SFTP channel is not wired to SSH yet, so in test mode a host's pane shows a folder of its
 /// own under the test home (`UITesting.fileHostRoot`). These tests therefore cover the browser and

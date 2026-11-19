@@ -5,7 +5,7 @@ import Darwin
 import CerberusModels
 import CerberusVault
 
-/// Brings hosts in from an OpenSSH `config` file (spec §6.5): a preview of what is in it and what
+/// Brings hosts in from an OpenSSH `config` file: a preview of what is in it and what
 /// is already here, then an import that never overwrites. The file is only read.
 struct ImportSSHConfigSheet: View {
     @Environment(\.modelContext) private var modelContext

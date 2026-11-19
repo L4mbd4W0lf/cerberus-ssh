@@ -64,7 +64,7 @@ struct FolderEditorSheet: View {
 
 // MARK: - Menu commands
 
-/// File and Session menu items with their shortcuts (spec §4.4).
+/// File and Session menu items with their shortcuts.
 struct WorkspaceCommands: Commands {
     let app: AppModel
     @Environment(\.openWindow) private var openWindow

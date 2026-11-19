@@ -206,7 +206,7 @@ struct AdvancedSettings: View {
     }
 }
 
-/// What follows the person to their other Macs through iCloud Keychain (spec §6.3, §6.6): the saved backup passphrase and
+/// What follows the person to their other Macs through iCloud Keychain: the saved backup passphrase and
 /// the vault's own key, each by its own switch. Neither uploads the vault file or a backup: only keys.
 struct ICloudKeychainSection: View {
     @Environment(AppModel.self) private var app

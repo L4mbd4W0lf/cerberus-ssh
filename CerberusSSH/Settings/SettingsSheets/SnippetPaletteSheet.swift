@@ -12,7 +12,7 @@ import SwiftUI
 // MARK: - Palette (⇧⌘K)
 
 /// Search saved commands and send one to the focused pane, or to the whole broadcast group
-/// when the pane is part of one (spec §9.4). A snippet with `{{placeholders}}` asks for its
+/// when the pane is part of one. A snippet with `{{placeholders}}` asks for its
 /// values first.
 struct SnippetPalette: View {
     @Environment(\.dismiss) private var dismiss

@@ -1,6 +1,6 @@
 import XCTest
 
-/// Automatic backups (spec §6.6): setting them up after a first backup, what they write and where,
+/// Automatic backups: setting them up after a first backup, what they write and where,
 /// keeping only the last few, and saying so when they cannot run.
 final class AutoBackupTests: CerberusUITestCase {
     private var folder: URL!

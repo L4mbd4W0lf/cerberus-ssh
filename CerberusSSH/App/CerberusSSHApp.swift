@@ -61,7 +61,7 @@ struct CerberusSSHApp: App {
     // the other's methods (a second delegate once disabled the quit confirmation). Put new delegate methods in AppDelegate.
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
-    /// Local-only store. Nothing is written to iCloud until the user opts in (spec §11.1).
+    /// Local-only store. Nothing is written to iCloud until the user opts in.
     private let modelContainer: ModelContainer
 
     /// One model for the whole process, so every window shares sessions, the vault
