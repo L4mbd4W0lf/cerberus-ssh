@@ -44,6 +44,27 @@ Transfers are shown as a badge in the file tab's status bar (`transfersBadge` in
 - [ ] Decide: the queue is per file tab (`tab.queue`), so should the button show the current tab's transfers or every tab's in the window?
 - [ ] Keep the VoiceOver label and the `files-transfers-badge` / `files-transfers` identifiers working, or update the UI tests.
 
+## Paste into every broadcasting pane
+
+With broadcast on, typed keys reach every pane in the group, but pasted text only reaches the focused pane. Find out why. Typed input is copied by `AppModel.mirrorInput` (`CerberusSSH/App/AppModel/AppModel+Broadcast.swift`), hooked up through the pane's `onInput` (`CerberusSSH/Sessions/SessionPane.swift`, `CerberusSSH/Workspace/TabContent.swift`); the paste path (with the multi-line paste confirmation) probably sends straight to the pane's connection without going through `onInput`.
+
+- [ ] Find where a paste is sent to the terminal (likely in the kit's terminal view) and why it skips `onInput`.
+- [ ] Send pasted text to every pane in the broadcast group, with bracketed paste kept per pane.
+- [ ] Ask the multi-line paste confirmation once, and say how many panes it will go to.
+- [ ] Cover it in `LiveBroadcastTests`.
+
+## Drop a tab onto one pane of a split tab
+
+Dragging a tab onto another tab's terminals splits the whole tab, not the pane it is dropped on. So once a tab is split, a pane in it cannot be split again by dropping: after dropping a tab at the bottom, another tab cannot be dropped on that bottom pane to split it to the right; after dropping a tab on the right, dropping on the right again does not split the right pane, and the only way to get a third pane is to drop on the left.
+
+The cause is in `CerberusSSH/Workspace/TabContent.swift`: the `.onDrop` with `PaneDropDelegate` is on the whole tab's panes, `PaneDropZone.zone(at:in:)` is worked out from the tab's size, the highlight covers part of the tab, and `performDrop` calls `app.mergeTab(moved, into: tabID, axis:before:)`, which calls `PaneLayout.merging(_:axis:before:)` and so splits at the root of the tab's layout.
+
+- [ ] Find the pane under the pointer (from `tab.layout.geometry(in:)`'s pane frames) and work out the zone within that pane's frame.
+- [ ] Draw the highlight over that half of the pane, not the tab.
+- [ ] Split that pane: a `mergeTab` (or new `PaneLayout` operation) that takes the target pane's id and puts the moved tab's panes beside it, leaving the rest of the layout alone. Moving a tab that is itself split should keep its layout as one subtree.
+- [ ] Do the same for a single pane dragged out of another tab (`app.draggingPaneID`), if that can be dropped here too.
+- [ ] Unit tests for the layout change (split a leaf deep in the tree, every side), and a UI test that drops onto a pane of an already split tab.
+
 ## Import hosts from iTerm2 profiles
 
 Today the only thing brought in from iTerm2 is a colour preset (`.itermcolors`, via `ITermColors.theme(from:name:)` in the kit, from Settings ▸ Appearance ▸ Your themes ▸ Import from iTerm2…). Hosts come only from `~/.ssh/config` (`SSHConfigImporter`).
