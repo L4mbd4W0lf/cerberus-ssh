@@ -2,6 +2,42 @@
 
 Features that are wanted but not started. Nothing here is promised for a release.
 
+## Automatic backups that run while the app is closed
+
+Today automatic backups only run while the app is open: `startAutoBackupSchedule()` (`CerberusSSH/Backup/AutoBackup.swift`) checks every quarter of an hour, and if the folder is missing (a network share or external drive not connected) the backup fails and is retried later. Make it a launch agent that `launchd` runs whether the app is open or not, and when the folder is not there, keep the backup in Application Support and move it across once the folder comes back.
+
+Decided: the agent runs the app's own executable in a headless mode, not a separate helper. The vault data key and the backup passphrase are device-only items in the legacy login keychain (`DataKeyStore.swift`, `ExportPassphraseStore.swift` in the kit), trusted by the signature of the program that made them; a separate helper would get a Keychain prompt on every run, and only the Sync build has an access group to share. The same executable has the same signature, so no prompt and no new target.
+
+The agent:
+
+- [ ] `Contents/Library/LaunchAgents/com.cerberusssh.backup.plist` in the bundle, with `BundleProgram` `Contents/MacOS/CerberusSSH` and argument `--background-backup`, `StartInterval` (900 seconds) and `StartOnMount` (so it runs when a share or drive comes back).
+- [ ] Register it with `SMAppService.agent(plistName:)` when automatic backups are turned on, unregister when they are turned off. Handle `requiresApproval` (it shows in System Settings ▸ General ▸ Login Items & Extensions) and say so in Settings ▸ Backup, with a button to open that pane.
+- [ ] A custom `main()` that checks for `--background-backup` before SwiftUI starts and runs one backup with no window, Dock icon or `NSApplication`, then exits.
+- [ ] Read the settings from the app's defaults domain by suite name (bundle id), since `launchd` does not start it as the app.
+- [ ] Remove the in-app 15-minute loop; "Back Up Now" stays in the app.
+
+Sharing the store with the open app:
+
+- [ ] A read-only way to open the catalogue in the kit (next to `localContainer`): no migration, no `adoptLegacyStore`, no `StoreBackups` copies or pending restore. If the stored version is not exactly the current one, skip the run and record why.
+- [ ] The background run writes nothing to the store. `appSettings.lastExportAt` is taken from `autoBackupLastAt` the next time the app opens.
+- [ ] A lock file (`flock`) in Application Support so the app's "Back Up Now" and the agent never write a backup at the same time.
+
+When the folder is not there:
+
+- [ ] Write the backup to `~/Library/Application Support/CerberusSSH/PendingBackups/` and count it as taken, so the schedule moves on.
+- [ ] Keep only the newest pending one (each backup is a whole snapshot).
+- [ ] On every run, if the folder is back: copy the pending one across, check it (size, and that it opens), remove the local copy, then remove the oldest in the folder beyond the number to keep.
+- [ ] Settings ▸ Backup shows "1 backup waiting for the folder" rather than the error, with the folder it is waiting for.
+- [ ] Cloud folders (`~/Library/CloudStorage`, iCloud Drive) are nearly always present and upload on their own, so this mostly matters for shares and drives; nothing special for them.
+
+Checks:
+
+- [ ] `Scripts/check-no-local-exec.sh` still passes (a `launchd` agent is not the terminal running a local process, but run it).
+- [ ] `AutoBackupTests` drive the in-app schedule today; give UI tests a way to trigger the headless run (or keep an in-app trigger for tests only).
+- [ ] Unit tests for the pending-backup move and retention, including the folder coming back mid-move.
+- [ ] README and release notes: the background item, where pending backups are kept, and that they include secrets sealed with the backup passphrase.
+- [ ] Needs a commit in each repository (read-only store opener in the kit); note the pairing.
+
 ## Build the Settings window on an AppKit split view
 
 The Settings sidebar must not collapse, and `NavigationSplitView` does not allow that. Today `SettingsView` (`CerberusSSH/Settings/SettingsView.swift`) reaches into SwiftUI's split view with SwiftUIIntrospect, sets `canCollapse` off, and watches it with key-value observing because SwiftUI turns it back on whenever the category changes (`ebd48c7`). That is a library fighting another library's internals, it only covers macOS 26 and 27, and it is the only use of SwiftUIIntrospect. Do it the way System Settings appears to: own the split view in AppKit and host the SwiftUI parts inside it.
