@@ -4,6 +4,7 @@ import Observation
 import CerberusModels
 import CerberusVault
 import CerberusSSHCore
+import CerberusTerminal
 
 /// Typing into several panes at once.
 extension AppModel {
@@ -43,6 +44,19 @@ extension AppModel {
                 do { try await target.connection.send(bytes) } catch {
                     CerberusLog.warning("broadcast", "could not copy input to \(target.title): \(CerberusLog.describe(error))")
                 }
+            }
+        }
+    }
+
+    /// Pastes what was pasted in `session` into the other broadcasting panes of its tab. Each pane's own terminal
+    /// encodes it, so a pane whose program asked for bracketed paste gets it bracketed and the others do not. The
+    /// user has already confirmed it once for the whole group.
+    func mirrorPaste(_ text: String, from session: SessionViewModel) {
+        guard let tab = tab(containing: session), let set = broadcastSets[tab.id] else { return }
+        for id in Broadcast.targets(from: session.id, set: set, tabPanes: tab.layout.leaves) {
+            guard let target = self.session(withID: id), target.isLive else { continue }
+            if !target.terminalHost.paste(text) {
+                CerberusLog.warning("broadcast", "could not paste into \(target.title): its terminal has not been shown")
             }
         }
     }

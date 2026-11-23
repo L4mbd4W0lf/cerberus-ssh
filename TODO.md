@@ -70,15 +70,6 @@ The windows and sheets for port forwarding, and how forwards are presented, need
 - [ ] Redesign the add / edit sheets.
 - [ ] Improve how forwards and their state are shown (sidebar, host inspector, session status bar).
 
-## Paste into every broadcasting pane
-
-With broadcast on, typed keys reach every pane in the group, but pasted text only reaches the focused pane. Find out why. Typed input is copied by `AppModel.mirrorInput` (`CerberusSSH/App/AppModel/AppModel+Broadcast.swift`), hooked up through the pane's `onInput` (`CerberusSSH/Sessions/SessionPane.swift`, `CerberusSSH/Workspace/TabContent.swift`); the paste path (with the multi-line paste confirmation) probably sends straight to the pane's connection without going through `onInput`.
-
-- [ ] Find where a paste is sent to the terminal (likely in the kit's terminal view) and why it skips `onInput`.
-- [ ] Send pasted text to every pane in the broadcast group, with bracketed paste kept per pane.
-- [ ] Ask the multi-line paste confirmation once, and say how many panes it will go to.
-- [ ] Cover it in `LiveBroadcastTests`.
-
 ## Drop a tab onto one pane of a split tab
 
 Dragging a tab onto another tab's terminals splits the whole tab, not the pane it is dropped on. So once a tab is split, a pane in it cannot be split again by dropping: after dropping a tab at the bottom, another tab cannot be dropped on that bottom pane to split it to the right; after dropping a tab on the right, dropping on the right again does not split the right pane, and the only way to get a third pane is to drop on the left.

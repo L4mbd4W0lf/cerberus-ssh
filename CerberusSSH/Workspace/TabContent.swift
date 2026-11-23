@@ -50,6 +50,8 @@ struct TabContent: View {
                             inBroadcastGroup: app.broadcastMembers(in: tab.id).contains(id),
                             onToggleBroadcastMembership: { app.toggleBroadcastMembership(session, inTab: tab.id) },
                             onInput: { bytes in app.mirrorInput(bytes, from: session) },
+                            onPaste: { text in app.mirrorPaste(text, from: session) },
+                            broadcastPaneCount: app.groupSize(for: session),
                             // A click can only move focus within the tab being shown; it
                             // must never switch tabs (hidden tabs can't steal it back).
                             onFocus: { app.focusWithinSelectedTab(session, in: windowID) }

@@ -20,6 +20,9 @@ struct SessionPane: View {
     var inBroadcastGroup = false
     var onToggleBroadcastMembership: () -> Void = {}
     var onInput: (([UInt8]) -> Void)?
+    var onPaste: ((String) -> Void)?
+    /// How many panes a paste here reaches while broadcasting, this one included.
+    var broadcastPaneCount = 1
     var onFocus: () -> Void = {}
     @Environment(AppModel.self) private var app
     @Environment(\.openWindow) private var openWindow
@@ -84,6 +87,8 @@ struct SessionPane: View {
                     copyOnSelect: copiesOnSelect
                 ),
                 onInput: isBroadcasting && inBroadcastGroup ? onInput : nil,
+                onPaste: isBroadcasting && inBroadcastGroup ? onPaste : nil,
+                pastePaneCount: isBroadcasting && inBroadcastGroup ? broadcastPaneCount : 1,
                 isFocused: isFocused,
                 onFocus: onFocus,
                 menuEntries: {
