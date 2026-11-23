@@ -50,7 +50,7 @@ struct TabContent: View {
     private var panes: some View {
         GeometryReader { geometry in
             let bounds = CGRect(origin: .zero, size: geometry.size)
-            let layout = tab.layout.geometry(in: bounds)
+            let layout = tab.layout.geometry(in: bounds, dividerThickness: DividerHandle.thickness)
 
             ZStack(alignment: .topLeading) {
                 ForEach(tab.layout.leaves, id: \.self) { id in
@@ -157,17 +157,31 @@ struct DividerHandle: View {
     let tabID: UUID
     @Environment(AppModel.self) private var app
 
+    /// How thick the line between two panes is drawn, and the space the layout leaves for it.
+    static let thickness: CGFloat = 1
+    /// How far the place to grab it reaches past the line on each side, over the panes' edges, so a thin line is
+    /// still easy to drag.
+    private static let reach: CGFloat = 3
+
+    /// The line, widened by `reach` on both sides across it.
+    private var grabFrame: CGRect {
+        divider.axis == .horizontal
+            ? divider.frame.insetBy(dx: -Self.reach, dy: 0)
+            : divider.frame.insetBy(dx: 0, dy: -Self.reach)
+    }
+
     var body: some View {
         Rectangle()
             .fill(.separator)
             .frame(width: divider.frame.width, height: divider.frame.height)
+            .frame(width: grabFrame.width, height: grabFrame.height)
             .contentShape(Rectangle())
-            .offset(x: divider.frame.minX, y: divider.frame.minY)
+            .offset(x: grabFrame.minX, y: grabFrame.minY)
             .gesture(
                 DragGesture(coordinateSpace: .named("tab-\(tabID.uuidString)"))
                     .onChanged { value in
                         app.setSplitRatio(
-                            PaneLayout.ratio(forDragTo: value.location, divider: divider),
+                            PaneLayout.ratio(forDragTo: value.location, divider: divider, thickness: Self.thickness),
                             split: divider.splitID, in: tabID
                         )
                     }
