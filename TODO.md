@@ -131,3 +131,45 @@ People moving from another client should be able to bring their hosts. Paths and
 
 - [ ] One step that parses an `ssh …` command line into a host (user, host, `-p`, `-i`, `-J`, `-o`), used by the iTerm2 profile import above (and Shuttle, if it is ever added).
 - [ ] One import sheet for all of these, like `ImportSSHConfigSheet`: pick the source, preview the hosts, choose which to bring in, and report what was skipped and why.
+
+## Saved workspaces
+
+A saved set of hosts that opens together with a double-click: as one tab of panes or as a tab each, in the current window or a new one. Listed in a sidebar tab of its own, and made either from scratch or from a tab that is already open.
+
+The name is Workspace for the user. In the code it needs a name of its own (`SavedWorkspace`), because "workspace" there already means the main window and its tabs (`WorkspaceTab`, `CerberusSSH/Workspace/`, "workspace windows").
+
+Where things are now: the sidebar tabs are `SidebarTab` (`CerberusSSH/Workspace/SidebarTabs.swift`); hosts are opened by `AppModel.connect(to:placement:)` with a `SessionPlacement` (`.newTab`, `.splitRight`…, `.newWindow`); a tab's arrangement is its `PaneLayout`; the tab's context menu is in `CerberusSSH/Workspace/TabBar.swift`; snippets are the `Snippet` model.
+
+The model:
+
+- [ ] A `SavedWorkspace` SwiftData model in the kit: name, an ordered list of hosts (by host id, so renaming or moving a host keeps it), how it opens, and the options below. CloudKit-safe (everything optional or defaulted), with the schema version bumped and `SchemaFreezeTests` updated, as `SchemaFreeze.swift` says.
+- [ ] How it opens, one choice that is the double-click default: Current Window + Tabs, Current Window + Panes, New Window + Tabs, New Window + Panes.
+- [ ] When a host is already connected: open a new session (the default) or reuse the session that is open. A setting on each workspace.
+- [ ] A host that has since been deleted is skipped when opening, and shown as missing in the editor.
+- [ ] Include workspaces in backups and restore (`CerberusVault/Backup`).
+
+The sidebar tab:
+
+- [ ] A Workspaces tab in `SidebarTab`, listing them by name with their host count (and the group colours of their hosts, as a tab shows them).
+- [ ] Double-click opens it the workspace's own way. Return does the same, as for hosts.
+- [ ] Context menu: Open, then Open As ▸ each of the other three ways, for this time only (the workspace's setting is unchanged); Edit…, Duplicate, Rename, Delete (asks first).
+- [ ] A + button and an empty state that says how to make one (from the button, or from a tab's context menu).
+
+Making and editing one:
+
+- [ ] An editor sheet: name, the hosts (add from a host picker, remove, drag to reorder), how it opens, and what to do with hosts that are already connected.
+- [ ] Tab context menu: Save as Workspace… opens the editor filled in from the tab: its hosts in pane order, Panes (or Tabs for a single-pane tab), and its split layout.
+- [ ] Maybe: Save Window as Workspace…, from every terminal tab in the window, opened as Tabs.
+
+Extras:
+
+- [ ] Keep the split layout: saved from a tab, a workspace keeps how its panes are split (sides and divider positions, the tab's `PaneLayout` with host ids in place of session ids), and opening it as Panes rebuilds that layout. Without one (or after hosts were added or removed in the editor), Panes splits evenly.
+- [ ] Command on open: each host in a workspace can have a command or a snippet that is sent once it has connected (e.g. `cd` to a folder, `tail -f` a log). Sent once, after the shell is ready, never on a reconnect.
+- [ ] Broadcast on open: a workspace opened as Panes can start with broadcast on, every pane ticked.
+- [ ] Open from Quick Connect: workspaces show in Quick Connect (⌘K) beside hosts, and in a menu (Session ▸ Open Workspace ▸ …), and a workspace can have its own keyboard shortcut.
+
+Checks:
+
+- [ ] Unit tests in the kit for the model (an ordered host list, deleted hosts skipped, the saved layout mapped back from host ids to new sessions) and the schema snapshot.
+- [ ] UI tests: open each of the four ways, Open As from the context menu, Save as Workspace from a split tab and reopen it with the same layout, a command on open running in the right pane.
+- [ ] Help: a section on workspaces; the shortcut catalogue if they get shortcuts.
