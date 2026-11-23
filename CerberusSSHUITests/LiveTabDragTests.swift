@@ -83,6 +83,26 @@ final class LiveTabDragTests: CerberusUITestCase {
         XCTAssertEqual(server!.liveSessions(), 3, "dropping onto a pane dropped or reopened a connection")
     }
 
+    @MainActor func testATabOfPanesFromDifferentGroupsShowsEveryGroupColour() throws {
+        try startServer()
+        // web-1 is in Production (red) and reaches the test server; staging-web is in Staging (yellow) and does not,
+        // but a tab that failed to connect still has its host's colour.
+        options.seed = "readme"
+        options.connect = ["web-1", "staging-web"]
+        launch()
+        let tabs = mainWindow.buttons.matching(NSPredicate(format: "label ENDSWITH 'Close tab'"))
+        eventually("expected a tab for each host", timeout: 20) { tabs.count == 2 }
+        let web = mainWindow.buttons.matching(NSPredicate(format: "label CONTAINS 'web-1'")).firstMatch
+        let staging = mainWindow.buttons.matching(NSPredicate(format: "label CONTAINS 'staging-web'")).firstMatch
+        XCTAssertTrue(web.label.hasPrefix("Red, "), "web-1's tab does not show Production's colour: \(web.label)")
+        XCTAssertTrue(staging.label.hasPrefix("Yellow, "), "staging-web's tab does not show Staging's colour: \(staging.label)")
+
+        web.click()
+        drag(staging, to: terminalPoint(0.9, 0.5))
+        eventually("the dropped tab did not become a pane") { tabs.count == 1 }
+        XCTAssertTrue(tabs.firstMatch.label.hasPrefix("Red, Yellow, "), "the merged tab should show both colours: \(tabs.firstMatch.label)")
+    }
+
     @MainActor func testADetachedTabCanBeDraggedBackIntoTheWindow() throws {
         try startServer()
         launchConnected("live-1", "live-2")

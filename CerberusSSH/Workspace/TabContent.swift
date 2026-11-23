@@ -24,11 +24,26 @@ struct TabContent: View {
             FileTabView(tab: files)
         } else {
             VStack(spacing: 0) {
+                groupLine
                 panes
                 Divider()
                 TabStatusBar(tab: tab) { session in app.focusWithinSelectedTab(session, in: windowID) }
                     .zIndex(1)
             }
+        }
+    }
+
+    /// The hosts' group colours in a line across the top of the tab, so a production terminal cannot be mistaken for a
+    /// test one: one line for the whole tab, never one per pane, and from left to right every group's colour when the
+    /// panes are from more than one.
+    @ViewBuilder
+    private var groupLine: some View {
+        let colors = app.groupColors(of: tab)
+        if !colors.isEmpty {
+            LinearGradient(colors: colors.map(\.color), startPoint: .leading, endPoint: .trailing)
+                .frame(height: 3)
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
         }
     }
 

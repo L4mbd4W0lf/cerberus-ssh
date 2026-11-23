@@ -156,6 +156,7 @@ struct TabButton: View {
     @Environment(\.openWindow) private var openWindow
 
     private var session: SessionViewModel? { app.session(withID: tab.focusedSessionID) }
+    private var groupColors: [NodeColor] { app.groupColors(of: tab) }
     private var isSelected: Bool { tab.id == app.selectedTabID(in: windowID) }
     private var isRenaming: Bool { app.renamingTabID == tab.id }
 
@@ -198,7 +199,7 @@ struct TabButton: View {
                         .help("\(files.queue.activeCount) transfer(s) in progress")
                 }
             } else if let session {
-                if let color = session.nodeColor { NodeColorMark(color: color, width: 3, height: 12) }
+                if !groupColors.isEmpty { NodeColorMark(colors: groupColors, width: 3, height: 12) }
                 Image(systemName: session.statusSymbol)
                     .foregroundStyle(session.statusColor)
                     .font(.system(size: 9))

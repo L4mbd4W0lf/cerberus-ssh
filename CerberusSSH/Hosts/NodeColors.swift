@@ -18,19 +18,32 @@ extension NodeColor {
     }
 }
 
-/// A folder's colour as a small mark beside a name. Always with the colour's name in the
-/// tooltip, so the colour is never the only thing that says it.
+/// A folder's colour as a small mark beside a name, or several colours as a gradient from top to bottom (a tab whose
+/// panes are from different groups). Always with the colours' names in the tooltip, so the colour is never the only
+/// thing that says it.
 struct NodeColorMark: View {
-    let color: NodeColor
+    let colors: [NodeColor]
     var width: CGFloat = 3
     var height: CGFloat = 14
 
+    init(color: NodeColor, width: CGFloat = 3, height: CGFloat = 14) {
+        self.init(colors: [color], width: width, height: height)
+    }
+
+    init(colors: [NodeColor], width: CGFloat = 3, height: CGFloat = 14) {
+        self.colors = colors
+        self.width = width
+        self.height = height
+    }
+
+    private var names: String { colors.map(\.displayName).joined(separator: ", ") }
+
     var body: some View {
         Capsule()
-            .fill(color.color)
+            .fill(LinearGradient(colors: colors.map(\.color), startPoint: .top, endPoint: .bottom))
             .frame(width: width, height: height)
-            .help(color.displayName)
-            .accessibilityLabel(color.displayName)
+            .help(names)
+            .accessibilityLabel(names)
     }
 }
 

@@ -70,16 +70,6 @@ The windows and sheets for port forwarding, and how forwards are presented, need
 - [ ] Redesign the add / edit sheets.
 - [ ] Improve how forwards and their state are shown (sidebar, host inspector, session status bar).
 
-## No group colour line on split panes
-
-Once a tab is split (by dropping a tab onto it, or with the split shortcut), every pane draws the host's group colour as a 3-point line along its top, the same line the tab has. In a split tab these lines run across the middle of the terminals and sit against the focus ring, and they should go.
-
-The line is the `.overlay(alignment: .top)` on `session.nodeColor` in `CerberusSSH/Sessions/SessionPane.swift`.
-
-- [ ] Do not draw the line on a pane when the tab has more than one pane (pass that in from `CerberusSSH/Workspace/TabContent.swift`, or move the line up to the tab).
-- [ ] Decide whether a single-pane tab keeps the line, and whether a split tab of mixed groups needs some other way to show each pane's group.
-- [ ] Look at it split both ways, with and without the focus ring and broadcast outline.
-
 ## Import hosts from iTerm2 profiles
 
 Today the only thing brought in from iTerm2 is a colour preset (`.itermcolors`, via `ITermColors.theme(from:name:)` in the kit, from Settings ▸ Appearance ▸ Your themes ▸ Import from iTerm2…). Hosts come only from `~/.ssh/config` (`SSHConfigImporter`).

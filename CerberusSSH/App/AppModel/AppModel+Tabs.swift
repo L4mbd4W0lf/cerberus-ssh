@@ -78,6 +78,13 @@ extension AppModel {
         tabs[index].name = TabName.normalised(text)
     }
 
+    /// The group colours of a tab's panes, in pane order, each once: several when the panes are from different groups.
+    /// Panes with no colour add nothing.
+    func groupColors(of tab: WorkspaceTab) -> [NodeColor] {
+        var seen = Set<NodeColor>()
+        return tab.layout.leaves.compactMap { session(withID: $0)?.nodeColor }.filter { seen.insert($0).inserted }
+    }
+
     /// What a tab is called: the name it was given, else the host of its focused pane (never the title the remote
     /// shell sets), or both sides of a file tab.
     func title(of tab: WorkspaceTab) -> String {

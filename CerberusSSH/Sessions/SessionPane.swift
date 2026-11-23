@@ -126,13 +126,6 @@ struct SessionPane: View {
                 .help("Include this pane when typing is broadcast")
             }
         }
-        // The host's group colour along the top, so a production terminal cannot be mistaken for a test one.
-        .overlay(alignment: .top) {
-            if let color = session.nodeColor {
-                color.color.frame(height: 3).allowsHitTesting(false)
-                    .accessibilityHidden(true)
-            }
-        }
         .overlay {
             // A participating pane is always outlined, so it is never ambiguous where typing goes.
             if isBroadcasting && inBroadcastGroup {
