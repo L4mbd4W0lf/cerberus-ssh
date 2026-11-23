@@ -175,7 +175,7 @@ private struct GettingStarted: View {
                     4,
                     "rectangle.split.2x1",
                     "Work in tabs and panes",
-                    "⌘T opens another tab, ⌘D splits the pane to the right. ⌥⌘ and an arrow key moves between panes, and ⌥⌘T takes a pane out into a tab of its own. Right-click a pane for splits on every side, broadcast, copy and paste, and the logs. Drag a tab onto another tab's terminal to bring two sessions side by side, or out of the window to give it a window of its own. A middle-click closes a tab."
+                    "⌘T opens another tab, ⌘D splits the pane to the right. ⌥⌘ and an arrow key moves between panes, and ⌥⌘T takes a pane out into a tab of its own. Right-click a pane for splits on every side, broadcast, copy and paste, and the logs. Drag a tab onto a pane of another tab to put it beside that pane, on the side you let go, or out of the window to give it a window of its own. A pane's grip at its top drags just that pane, onto another pane or the tab bar. A middle-click closes a tab."
                 )
                 step(
                     5,

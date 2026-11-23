@@ -70,18 +70,6 @@ The windows and sheets for port forwarding, and how forwards are presented, need
 - [ ] Redesign the add / edit sheets.
 - [ ] Improve how forwards and their state are shown (sidebar, host inspector, session status bar).
 
-## Drop a tab onto one pane of a split tab
-
-Dragging a tab onto another tab's terminals splits the whole tab, not the pane it is dropped on. So once a tab is split, a pane in it cannot be split again by dropping: after dropping a tab at the bottom, another tab cannot be dropped on that bottom pane to split it to the right; after dropping a tab on the right, dropping on the right again does not split the right pane, and the only way to get a third pane is to drop on the left.
-
-The cause is in `CerberusSSH/Workspace/TabContent.swift`: the `.onDrop` with `PaneDropDelegate` is on the whole tab's panes, `PaneDropZone.zone(at:in:)` is worked out from the tab's size, the highlight covers part of the tab, and `performDrop` calls `app.mergeTab(moved, into: tabID, axis:before:)`, which calls `PaneLayout.merging(_:axis:before:)` and so splits at the root of the tab's layout.
-
-- [ ] Find the pane under the pointer (from `tab.layout.geometry(in:)`'s pane frames) and work out the zone within that pane's frame.
-- [ ] Draw the highlight over that half of the pane, not the tab.
-- [ ] Split that pane: a `mergeTab` (or new `PaneLayout` operation) that takes the target pane's id and puts the moved tab's panes beside it, leaving the rest of the layout alone. Moving a tab that is itself split should keep its layout as one subtree.
-- [ ] Do the same for a single pane dragged out of another tab (`app.draggingPaneID`), if that can be dropped here too.
-- [ ] Unit tests for the layout change (split a leaf deep in the tree, every side), and a UI test that drops onto a pane of an already split tab.
-
 ## No group colour line on split panes
 
 Once a tab is split (by dropping a tab onto it, or with the split shortcut), every pane draws the host's group colour as a 3-point line along its top, the same line the tab has. In a split tab these lines run across the middle of the terminals and sit against the focus ring, and they should go.

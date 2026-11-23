@@ -15,8 +15,8 @@ struct TabContent: View {
     @Environment(AppModel.self) private var app
 
     @Environment(\.windowID) private var windowID
-    /// Where a dragged tab would go if let go now, while one is over these terminals.
-    @State private var dropZone: PaneDropZone?
+    /// The pane and side a dragged tab or pane would join if let go now, while one is over these terminals.
+    @State private var dropTarget: PaneDropTarget?
     private var isSelectedTab: Bool { tab.id == app.selectedTabID(in: windowID) }
 
     var body: some View {
@@ -65,10 +65,13 @@ struct TabContent: View {
                     DividerHandle(divider: divider, tabID: tab.id)
                 }
             }
+            // The whole tab. `offset` moves where a pane is drawn but not the stack's own frame, which would
+            // otherwise be one pane's size at the top left, and a drop on any pane outside it would never arrive.
+            .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
             .coordinateSpace(name: "tab-\(tab.id.uuidString)")
             .overlay {
-                if let zone = dropZone {
-                    let area = zone.highlight(in: geometry.size)
+                if let target = dropTarget {
+                    let zone = target.zone, area = target.highlight
                     RoundedRectangle(cornerRadius: 6)
                         .fill(Color.accentColor.fill(0.22, contrast))
                         .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.accentColor, lineWidth: 3))
@@ -79,43 +82,58 @@ struct TabContent: View {
                         .allowsHitTesting(false)
                 }
             }
-            // A tab dragged here joins the side of the middle it is let go on.
+            // A tab (or a pane, by its grip) dragged here joins the pane it is let go on, on the side of that pane's
+            // middle it is let go on.
             .onDrop(of: [TabDrag.type], delegate: PaneDropDelegate(
-                size: geometry.size, tabID: tab.id, app: app, zone: $dropZone
+                panes: layout.panes, tabID: tab.id, app: app, target: $dropTarget
             ))
         }
     }
 }
 
-/// Follows a dragged tab over a tab's terminals, working out which side it would join.
+/// Follows a dragged tab, or a pane dragged by its grip, over a tab's terminals, working out which pane it would join
+/// and on which side.
 struct PaneDropDelegate: DropDelegate {
-    let size: CGSize
+    let panes: [UUID: CGRect]
     let tabID: UUID
     let app: AppModel
-    @Binding var zone: PaneDropZone?
+    @Binding var target: PaneDropTarget?
 
     func validateDrop(info: DropInfo) -> Bool {
-        guard let dragged = app.draggingTabID else { return false }
         let isFiles = { (id: UUID) in app.tabs.first { $0.id == id }?.files != nil }
-        return dragged != tabID && !isFiles(dragged) && !isFiles(tabID)
+        if isFiles(tabID) { return false }
+        if let dragged = app.draggingTabID { return dragged != tabID && !isFiles(dragged) }
+        return app.draggingPaneID != nil
     }
 
-    func dropEntered(info: DropInfo) { zone = PaneDropZone.zone(at: info.location, in: size) }
+    /// Over the pane being dragged there is nothing to join.
+    private func target(at info: DropInfo) -> PaneDropTarget? {
+        PaneDropTarget.find(at: info.location, in: panes, excluding: app.draggingPaneID)
+    }
+
+    func dropEntered(info: DropInfo) { target = target(at: info) }
 
     func dropUpdated(info: DropInfo) -> DropProposal? {
-        zone = PaneDropZone.zone(at: info.location, in: size)
-        return DropProposal(operation: .move)
+        target = target(at: info)
+        return DropProposal(operation: target == nil ? .forbidden : .move)
     }
 
-    func dropExited(info: DropInfo) { zone = nil }
+    func dropExited(info: DropInfo) { target = nil }
 
     func performDrop(info: DropInfo) -> Bool {
-        defer { zone = nil }
-        guard let moved = app.draggingTabID, moved != tabID,
-              let side = PaneDropZone.zone(at: info.location, in: size) else { return false }
-        app.tabDropHandled()
-        app.mergeTab(moved, into: tabID, axis: side.axis, before: side.isBefore)
-        return true
+        defer { target = nil }
+        guard let goal = target(at: info) else { return false }
+        if let moved = app.draggingTabID, moved != tabID {
+            app.tabDropHandled()
+            app.mergeTab(moved, into: tabID, beside: goal.pane, axis: goal.zone.axis, before: goal.zone.isBefore)
+            return true
+        }
+        if let pane = app.draggingPaneID {
+            app.tabDropHandled()
+            app.movePane(pane, beside: goal.pane, inTab: tabID, axis: goal.zone.axis, before: goal.zone.isBefore)
+            return true
+        }
+        return false
     }
 }
 

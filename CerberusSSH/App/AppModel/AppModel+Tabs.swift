@@ -26,18 +26,19 @@ extension AppModel {
         }
     }
 
-    /// Moves every pane of `sourceID` into `targetID`, beside it or below it. The sessions
-    /// keep running; the source tab disappears. The new panes are not added to a broadcast
-    /// that is already on: joining one sends keystrokes to that server, so it is a choice.
-    func mergeTab(_ sourceID: UUID, into targetID: UUID, axis: PaneLayout.Axis, before: Bool = false) {
+    /// Moves every pane of `sourceID` into `targetID`, beside its pane `pane` or below it, splitting only that pane;
+    /// a split tab keeps its own arrangement. The sessions keep running; the source tab disappears. The new panes are
+    /// not added to a broadcast that is already on: joining one sends keystrokes to that server, so it is a choice.
+    func mergeTab(_ sourceID: UUID, into targetID: UUID, beside pane: UUID, axis: PaneLayout.Axis, before: Bool = false) {
         guard sourceID != targetID,
               let source = tabs.first(where: { $0.id == sourceID }),
               let targetIndex = tabs.firstIndex(where: { $0.id == targetID }),
-              source.files == nil, tabs[targetIndex].files == nil else { return }
+              source.files == nil, tabs[targetIndex].files == nil,
+              tabs[targetIndex].layout.contains(pane) else { return }
         let sourceWindow = source.windowID
         let targetWindow = tabs[targetIndex].windowID
 
-        tabs[targetIndex].layout = tabs[targetIndex].layout.merging(source.layout, axis: axis, before: before)
+        tabs[targetIndex].layout = tabs[targetIndex].layout.inserting(source.layout, beside: pane, axis: axis, before: before)
         tabs[targetIndex].focusedSessionID = source.focusedSessionID
         tabs.removeAll { $0.id == sourceID }
         pruneBroadcast(afterClosing: sourceID)
@@ -46,6 +47,19 @@ extension AppModel {
         if sourceWindow != targetWindow, selectedTabIDs[sourceWindow] == sourceID {
             selectedTabIDs[sourceWindow] = tabs(in: sourceWindow).first?.id
         }
+    }
+
+    /// Moves a pane dragged by its grip beside `target`, a pane of `tabID`, which may be the tab it came from. It is
+    /// taken out into a tab of its own and merged in from there. Moved within its own tab it stays in that tab's
+    /// broadcast if it was in it; moved to another tab it does not join one, as with `mergeTab`.
+    func movePane(_ sessionID: UUID, beside target: UUID, inTab tabID: UUID, axis: PaneLayout.Axis, before: Bool) {
+        guard sessionID != target, let session = session(withID: sessionID),
+              tabs.first(where: { $0.id == tabID })?.layout.contains(target) == true else { return }
+        let staysInTab = tabs.first { $0.layout.contains(sessionID) }?.id == tabID
+        let wasBroadcasting = broadcastMembers(in: tabID).contains(sessionID)
+        guard let ownTab = movePaneToTab(session) else { return }
+        mergeTab(ownTab, into: tabID, beside: target, axis: axis, before: before)
+        if staysInTab, wasBroadcasting, broadcastSets[tabID] != nil { broadcastSets[tabID]?.insert(sessionID) }
     }
 
     /// Gives a tab a window of its own and returns that window's id, for the caller to

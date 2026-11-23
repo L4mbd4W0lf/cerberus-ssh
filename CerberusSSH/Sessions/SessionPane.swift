@@ -719,7 +719,7 @@ struct PaneGrip: View {
         } preview: {
             Color.clear.frame(width: 1, height: 1)
         }
-        .help("Drag onto the tab bar to give this pane a tab of its own")
+        .help("Drag onto the tab bar to give this pane a tab of its own, or onto another pane to put it beside that one")
         .accessibilityElement()
         .accessibilityLabel("Pane handle, \(session.title)")
         .accessibilityHint("Moves this pane into a tab of its own")
