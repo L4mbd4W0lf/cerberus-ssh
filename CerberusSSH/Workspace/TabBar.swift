@@ -154,6 +154,7 @@ struct TabButton: View {
     @Environment(AppModel.self) private var app
     @Environment(\.windowID) private var windowID
     @Environment(\.openWindow) private var openWindow
+    @Environment(\.controlActiveState) private var activeState
 
     private var session: SessionViewModel? { app.session(withID: tab.focusedSessionID) }
     private var groupColors: [NodeColor] { app.groupColors(of: tab) }
@@ -247,7 +248,9 @@ struct TabButton: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 4)
-        .background(isSelected ? Color.accentColor.fill(0.22, contrast) : Color.clear, in: RoundedRectangle(cornerRadius: 6))
+        // The chosen tab goes grey in an inactive window, as a selection does.
+        .background(isSelected ? (activeState == .inactive ? Color.primary.fill(0.1, contrast) : Color.accentColor.fill(0.22, contrast)) : Color.clear,
+                    in: RoundedRectangle(cornerRadius: 6))
         .contentShape(Rectangle())
         .onTapGesture { app.selectTab(tab.id) }
         // Middle-click closes, as in a browser.

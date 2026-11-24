@@ -96,10 +96,12 @@ struct HostRow: View {
             // The system's logo in its own colours; the server symbol, tinted by state, until a connection has found it out.
             HostOSIcon(os: host.detectedOS, fallbackTint: onHighlight ? Color.onHighlight : iconColor)
                 .frame(width: 16, height: 16)
+            // No colour of its own off the highlight: the list dims unstyled text when the window
+            // is inactive, the way the folders' labels do, and any style, even `.primary`, stops it.
             Text(host.displayLabel)
                 .lineLimit(1)
                 .truncationMode(.middle)
-                .foregroundStyle(onHighlight ? Color.onHighlight : Color.primary)
+                .onHighlightStyle(onHighlight)
                 .layoutPriority(1)
             if let detail {
                 Text(detail)
@@ -135,5 +137,13 @@ struct HostRow: View {
         let withPort = host.port == 22 ? authority : "\(authority):\(host.port)"
         let tagged = host.tags.isEmpty ? withPort : withPort + "  " + host.tags.map { "#\($0)" }.joined(separator: " ")
         return host.isFavourite ? tagged + "\nFavourite" : tagged
+    }
+}
+
+private extension View {
+    /// White on the accent-coloured highlight; otherwise the list's own text colour, untouched.
+    @ViewBuilder
+    func onHighlightStyle(_ onHighlight: Bool) -> some View {
+        if onHighlight { foregroundStyle(Color.onHighlight) } else { self }
     }
 }

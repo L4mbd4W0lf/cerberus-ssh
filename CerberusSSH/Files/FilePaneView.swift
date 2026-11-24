@@ -30,6 +30,7 @@ struct FilePaneView: View {
     /// The path field has the keyboard: a click on it focuses the pane but must not hand the keyboard to the list.
     @FocusState private var pathFocused: Bool
     private var isFocusedPane: Bool { tab.focusedSide == side }
+    @Environment(\.controlActiveState) private var activeState
 
     var body: some View {
         VStack(spacing: 0) {
@@ -46,8 +47,9 @@ struct FilePaneView: View {
         }
         // Over a folder row the row is highlighted instead: that is where the drop goes.
         .overlay { if isDropTarget && dropFolder == nil { RoundedRectangle(cornerRadius: 4).strokeBorder(Color.accentColor, lineWidth: 3).allowsHitTesting(false) } }
-        // The pane that ⌘C, ⌘V and the keys act on, outlined as the focused pane of an SSH tab is.
-        .overlay { if isFocusedPane { Rectangle().strokeBorder(Color.accentColor.opacity(0.8), lineWidth: 2).allowsHitTesting(false) } }
+        // The pane that ⌘C, ⌘V and the keys act on, outlined as the focused pane of an SSH tab is. Not in an
+        // inactive window, which has no keyboard: focus rings go, as the system's own do.
+        .overlay { if isFocusedPane && activeState != .inactive { Rectangle().strokeBorder(Color.accentColor.opacity(0.8), lineWidth: 2).allowsHitTesting(false) } }
         // A click anywhere in the pane (its header, the empty part of the list) focuses it, and gives the list the
         // keyboard unless the click was on the path field.
         .simultaneousGesture(TapGesture().onEnded { tab.focus(side); if !pathFocused { listFocused = true } })
@@ -229,7 +231,7 @@ struct FilePaneView: View {
                     }
                     .listRowInsets(EdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 12))
                     .listRowSeparator(.hidden)
-                    .listRowBackground(FileRowBackground(entry: entry, striped: !index.isMultiple(of: 2),
+                    .listRowBackground(FileRowBackground(entry: entry, striped: !index.isMultiple(of: 2) && !pane.selection.contains(entry.id),
                                                          isDropTarget: dropFolder == entry.path, frames: rowFrames))
                 }
             }
@@ -283,9 +285,9 @@ struct FilePaneView: View {
                 Text(entry.name)
             } icon: {
                 Image(systemName: entry.isDirectory ? "folder.fill" : (entry.isSymlink ? "link" : "doc"))
-                    .foregroundStyle(entry.isDirectory ? Color.accentColor : Color.primary)
+                    .foregroundStyle(entry.isDirectory ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.primary))
             }
-            .foregroundStyle(Color.primary)
+            .foregroundStyle(.primary)
             .lineLimit(1).truncationMode(.middle)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .modifier(LinkTargetTip(entry: entry, backend: pane.backend))
@@ -435,6 +437,7 @@ private struct FileRowBackground: View {
     let frames: RowFrames
 
     var body: some View {
+        // The list draws the selection under this, and the light stripe is opaque: a selected row has none.
         (striped ? FilePaneView.stripe : Color.clear)
             .overlay(DropTargetBox().opacity(isDropTarget ? 1 : 0))
             .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { if entry.isDirectory { frames.folders[entry.path] = $0 } }

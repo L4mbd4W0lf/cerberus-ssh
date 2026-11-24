@@ -26,6 +26,7 @@ struct SessionPane: View {
     var onFocus: () -> Void = {}
     @Environment(AppModel.self) private var app
     @Environment(\.openWindow) private var openWindow
+    @Environment(\.controlActiveState) private var activeState
     @State private var isConfirmingReplace = false
     @Query private var allSettings: [AppSettings]
     @AppStorage(BehaviourSettings.copyOnSelectKey) private var copiesOnSelect = true
@@ -131,7 +132,8 @@ struct SessionPane: View {
             if isBroadcasting && inBroadcastGroup {
                 Rectangle().strokeBorder(Color.broadcast, lineWidth: 3)
                     .allowsHitTesting(false)
-            } else if showsFocusRing && isFocused {
+            } else if showsFocusRing && isFocused && activeState != .inactive {
+                // Not in an inactive window, which has no keyboard: focus rings go, as the system's own do.
                 Rectangle().strokeBorder(
                     Color.accentColor.opacity(0.8),
                     lineWidth: 2
@@ -679,6 +681,7 @@ struct PaneGrip: View {
     let theme: TerminalTheme
     @Environment(AppModel.self) private var app
     @Environment(\.openWindow) private var openWindow
+    @Environment(\.controlActiveState) private var activeState
     @State private var isOver = false
 
     var body: some View {

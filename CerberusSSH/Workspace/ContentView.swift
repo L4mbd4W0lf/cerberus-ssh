@@ -645,7 +645,7 @@ struct ContentView: View {
 
     private var detail: some View {
         VStack(spacing: 0) {
-            if !windowTabs.isEmpty { TabBar() }
+            if !windowTabs.isEmpty { TabBar().dimsWhenInactive() }
 
             ZStack {
                 placeholder

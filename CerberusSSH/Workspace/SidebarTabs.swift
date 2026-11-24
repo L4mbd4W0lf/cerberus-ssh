@@ -106,6 +106,7 @@ struct SidebarBottomBar: View {
     @Binding var order: HostSortOrder
     let onNewHost: () -> Void
     let onNewFolder: () -> Void
+    @Environment(\.controlActiveState) private var activeState
 
     var body: some View {
         GlassEffectContainer(spacing: 8) {
@@ -132,6 +133,8 @@ struct SidebarBottomBar: View {
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
         .fixedSize()
+        // AppKit draws a menu's label and ignores its colour in an inactive window, so the whole button fades.
+        .opacity(activeState == .inactive ? 0.45 : 1)
         .frame(width: 28, height: 28)
         .glassEffect(.regular.interactive(), in: .circle)
         .help("Add a host or folder")
@@ -178,6 +181,8 @@ struct SidebarBottomBar: View {
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
         .fixedSize()
+        // As the add button: AppKit draws the label and would leave it bright in an inactive window.
+        .opacity(activeState == .inactive ? 0.45 : 1)
         .help("Sort by: \(order.title)")
         .accessibilityLabel("Sort by")
         .accessibilityValue(order.title)

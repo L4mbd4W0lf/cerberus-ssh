@@ -63,7 +63,7 @@ struct FileTabStatusBar: View {
             Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Color.statusWarning)
         case .ready:
             Image(systemName: pane.source == .local ? "laptopcomputer" : "checkmark.circle.fill")
-                .foregroundStyle(pane.source == .local ? Color.secondary : Color.statusGood)
+                .foregroundStyle(pane.source == .local ? AnyShapeStyle(.secondary) : AnyShapeStyle(Color.statusGood))
         }
         Text(pane.source.title).fontWeight(.medium)
         switch pane.phase {

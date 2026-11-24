@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 import CerberusModels
 
 /// The sidebar's Port Forwards tab: every forward that is switched on,
@@ -19,6 +20,11 @@ struct SidebarForwardRows: View {
         }
     }
 
+    /// The list dims the name when the window is inactive, so the caption dims a step further to stay below it.
+    private var captionStyle: Color {
+        activeState == .inactive ? Color(nsColor: .tertiaryLabelColor) : Color.secondary
+    }
+
     private func row(_ host: SSHHost, _ forward: PortForward) -> some View {
         let plan = AppModel.forwardPlans(for: host).first { $0.id == forward.id }
         let activity = app.activity(of: forward)
@@ -33,10 +39,10 @@ struct SidebarForwardRows: View {
                 if let name = forward.name {
                     Text(name).font(.callout).lineLimit(1).truncationMode(.middle)
                     Text((plan?.summary ?? "") + "  ·  " + Self.caption(host: host, activity: activity))
-                        .font(.caption2).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
+                        .font(.caption2).foregroundStyle(captionStyle).lineLimit(1).truncationMode(.middle)
                 } else {
                     Text(plan?.summary ?? "").font(.system(.callout, design: .monospaced)).lineLimit(1).truncationMode(.middle)
-                    Text(Self.caption(host: host, activity: activity)).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+                    Text(Self.caption(host: host, activity: activity)).font(.caption2).foregroundStyle(captionStyle).lineLimit(1)
                 }
             }
             Spacer(minLength: 4)
@@ -69,7 +75,10 @@ struct SidebarForwardRows: View {
     private func trailing(_ forward: PortForward, _ activity: ForwardActivity, onHighlight: Bool) -> some View {
         switch activity {
         case .stopped:
-            Button { Task { await app.toggleForward(forward) } } label: { Image(systemName: "play.circle") }
+            Button { Task { await app.toggleForward(forward) } } label: {
+                Image(systemName: "play.circle")
+                    .foregroundStyle(activeState == .inactive ? Color(nsColor: .disabledControlTextColor) : Color.primary)
+            }
                 .buttonStyle(.borderless).help("Start. No terminal is opened.").accessibilityLabel("Start this forward")
         case .starting:
             ProgressView().controlSize(.small)

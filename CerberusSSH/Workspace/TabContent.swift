@@ -28,6 +28,7 @@ struct TabContent: View {
                 panes
                 Divider()
                 TabStatusBar(tab: tab) { session in app.focusWithinSelectedTab(session, in: windowID) }
+                    .dimsWhenInactive()
                     .zIndex(1)
             }
         }

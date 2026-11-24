@@ -16,6 +16,7 @@ struct FileTabView: View {
             FileEditsStrip(tab: tab)
             FileTabStatusBar(tab: tab)
         }
+        .dimsWhenInactive()
         .sheet(item: Binding(get: { tab.queue.prompts.first }, set: { _ in })) { prompt in
             ConflictSheet(prompt: prompt, queue: tab.queue)
         }
