@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- CerberusSSH app icon: three abstract heads on a dark rounded square. Source of truth for the icon;
+       Scripts/make-icon.sh renders it into the asset catalogue. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#252f5a"/>
+      <stop offset="1" stop-color="#0a0e1f"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.38" r="0.55">
+      <stop offset="0" stop-color="#5a6cc4" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#5a6cc4" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="side" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8da0d8"/>
+      <stop offset="1" stop-color="#4b5d99"/>
+    </linearGradient>
+    <linearGradient id="centre" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#b3c4ee"/>
+    </linearGradient>
+    <radialGradient id="eyeGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffb23e" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#ffb23e" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="125%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#000" flood-opacity="0.45"/>
+    </filter>
+    <!-- One head, centred on the origin: ears, a broad skull and a distinct muzzle. -->
+    <g id="head">
+      <path d="M -94 -134 L -54 -82 Q 0 -98 54 -82 L 94 -134 L 106 -32 Q 102 12 64 32 L 58 118 Q 54 152 0 156 Q -54 152 -58 118 L -64 32 Q -102 12 -106 -32 Z"/>
+    </g>
+    <g id="eyes">
+      <path d="M -74 -44 L -22 -26 L -44 -4 L -70 -14 Z" fill="#1a1020"/>
+      <path d="M 74 -44 L 22 -26 L 44 -4 L 70 -14 Z" fill="#1a1020"/>
+      <path d="M -63 -37 L -32 -26 L -45 -12 L -62 -19 Z" fill="#ffb23e"/>
+      <path d="M 63 -37 L 32 -26 L 45 -12 L 62 -19 Z" fill="#ffb23e"/>
+      <rect x="-26" y="122" width="52" height="30" rx="14" fill="#1a1020" opacity="0.85"/>
+      <path d="M 0 98 L 0 122" stroke="#1a1020" stroke-opacity="0.35" stroke-width="6" stroke-linecap="round"/>
+    </g>
+  </defs>
+
+  <!-- Everything below is drawn for an 824-point square and scaled up so the rounded square fills the whole
+       canvas, corner to corner; the corners outside it stay transparent. -->
+  <g transform="translate(512 512) scale(1.2427) translate(-512 -512)">
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg)"/>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#glow)"/>
+  <rect x="101.5" y="101.5" width="821" height="821" rx="183.5" fill="none" stroke="#ffffff" stroke-opacity="0.12" stroke-width="3"/>
+
+  <!-- the two outer heads, turned outward -->
+  <g transform="translate(272 526) rotate(-24)"><use href="#head" fill="url(#side)"/><use href="#eyes" opacity="0.95"/></g>
+  <g transform="translate(752 526) rotate(24)"><use href="#head" fill="url(#side)"/><use href="#eyes" opacity="0.95"/></g>
+
+  <!-- the middle head, larger and in front -->
+  <ellipse cx="512" cy="400" rx="150" ry="50" fill="url(#eyeGlow)" opacity="0.30"/>
+  <g transform="translate(512 430) scale(1.32)"><use href="#head" fill="url(#centre)"/><use href="#eyes"/></g>
+
+  <!-- the terminal prompt, in the amber of the eyes -->
+  <g fill="none" stroke="#8fa8f0" stroke-width="38" stroke-linecap="round" stroke-linejoin="round" transform="translate(14 0)">
+    <path d="M 372 726 L 450 790 L 372 854"/>
+    <path d="M 480 862 L 622 862"/>
+  </g>
+  </g>
+</svg>

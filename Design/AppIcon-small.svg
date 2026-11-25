@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- CerberusSSH app icon, simplified for the 16-pixel size only (Scripts/make-icon.sh uses it there). At that size the
+       three heads and the prompt of AppIcon.svg run together into one blob, so this keeps what survives: one large pale
+       head with two bold amber eyes, on the same dark rounded square. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2b3a74"/>
+      <stop offset="1" stop-color="#0d1330"/>
+    </linearGradient>
+    <linearGradient id="head" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#c3d1f5"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(512 512) scale(1.2427) translate(-512 -512)">
+    <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg)"/>
+    <!-- the head: ears, a broad skull and a muzzle, large enough to fill the square -->
+    <g transform="translate(512 505) scale(2.55)">
+      <path fill="url(#head)" d="M -94 -134 L -54 -82 Q 0 -98 54 -82 L 94 -134 L 106 -32 Q 102 12 64 32 L 58 118 Q 54 152 0 156 Q -54 152 -58 118 L -64 32 Q -102 12 -106 -32 Z"/>
+      <!-- eyes: slanted, amber, with a dark rim so they hold their shape when the picture is a few pixels wide -->
+      <path d="M -86 -50 L -16 -26 L -42 4 L -80 -8 Z" fill="#1a1020"/>
+      <path d="M 86 -50 L 16 -26 L 42 4 L 80 -8 Z" fill="#1a1020"/>
+      <path d="M -72 -40 L -28 -25 L -44 -6 L -70 -15 Z" fill="#ffae2e"/>
+      <path d="M 72 -40 L 28 -25 L 44 -6 L 70 -15 Z" fill="#ffae2e"/>
+      <rect x="-30" y="118" width="60" height="34" rx="16" fill="#1a1020"/>
+    </g>
+  </g>
+</svg>
