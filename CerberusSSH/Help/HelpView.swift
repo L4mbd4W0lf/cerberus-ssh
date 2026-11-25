@@ -332,8 +332,8 @@ private struct Tips: View {
             "A middle-click on a tab closes it. In a file tab ⌘W closes the tab too."
         ),
         (
-            "circle.lefthalf.filled", "Follow the system's light and dark",
-            "Settings ▸ Appearance can make the terminal follow macOS: Cerberus and Solarized switch between their dark and light versions, and Nord and Dracula stay as they are. A host's own theme follows it the same way."
+            "circle.lefthalf.filled", "Light, dark or the system's",
+            "Settings ▸ Appearance sets the app to Light, Dark or Follow System, and can make the terminal follow it: Cerberus and Solarized switch between their dark and light versions, and Nord and Dracula stay as they are. A host's own theme follows it the same way."
         ),
         (
             "paintpalette", "Colour a folder",

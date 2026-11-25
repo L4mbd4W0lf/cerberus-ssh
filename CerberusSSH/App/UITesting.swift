@@ -115,11 +115,14 @@ enum UITesting {
     /// so it is looked for a few times.
     @MainActor static func applyLook(_ scenario: Scenario) async {
         guard isActive else { return }
-        NSApp.appearance = switch scenario.appearance {
-        case "light": NSAppearance(named: .aqua)
-        case "dark": NSAppearance(named: .darkAqua)
+        // Set as the preference, as a person would, so a later write to the defaults does not undo it.
+        let mode: AppAppearance? = switch scenario.appearance {
+        case "light": .light
+        case "dark": .dark
         default: nil
         }
+        if let mode { UserDefaults.standard.set(mode.rawValue, forKey: AppAppearance.key) }
+        AppAppearance.apply()
         guard let size = scenario.windowSize else { return }
         for _ in 0..<30 {
             let workspace = NSApp.windows.filter { $0.identifier?.rawValue.hasPrefix("SwiftUI.WindowGroup") == true && $0.isVisible }

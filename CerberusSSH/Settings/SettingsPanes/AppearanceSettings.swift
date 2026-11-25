@@ -78,6 +78,7 @@ struct AppearanceSettings: View {
     @Query private var allSettings: [AppSettings]
     @AppStorage(ThemeCatalog.followSystemKey) private var followsSystemTheme =
         false
+    @AppStorage(AppAppearance.key) private var appAppearance = AppAppearance.system
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -115,24 +116,33 @@ struct AppearanceSettings: View {
         )
 
         return Form {
+            Section("App") {
+                Picker("Appearance", selection: $appAppearance) {
+                    ForEach(AppAppearance.allCases) { Text($0.title).tag($0) }
+                }
+                .accessibilityIdentifier("app-appearance")
+                Text("Light or Dark keeps the app that way whatever macOS is set to.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
             Section("Theme") {
                 Picker("Default theme", selection: $settings.defaultThemeID) {
                     ForEach(app.allThemes) { Text($0.name).tag($0.id) }
                 }
                 .accessibilityIdentifier("default-theme")
                 Toggle(
-                    "Follow the system's light or dark appearance",
+                    "Follow the app's light or dark appearance",
                     isOn: $followsSystemTheme
                 )
                 Text(
                     followsSystemTheme && !ThemeCatalog.hasCounterpart(chosen)
                         ? "\(chosen.name) has only one look, so it stays as it is."
-                        : "A theme with a light and a dark version (Cerberus, Solarized) switches with macOS. A theme with only one (Nord, Dracula) stays as chosen."
+                        : "A theme with a light and a dark version (Cerberus, Solarized) switches with the app. A theme with only one (Nord, Dracula) stays as chosen."
                 )
                 .font(.caption).foregroundStyle(.secondary)
                 ThemePreview(theme: appearance.theme, appearance: appearance)
                 Text(
-                    "A host can use a different theme from its Edit sheet; it follows the system the same way."
+                    "A host can use a different theme from its Edit sheet; it follows the app the same way."
                 )
                 .font(.caption).foregroundStyle(.secondary)
             }
