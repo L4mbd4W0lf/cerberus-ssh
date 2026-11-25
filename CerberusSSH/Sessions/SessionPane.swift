@@ -103,7 +103,7 @@ struct SessionPane: View {
             // A margin in the theme's own colour, so the focus ring and the broadcast outline,
             // which are drawn over the pane's edge, never cover the first column of text.
             .padding(5)
-            .background(appearance.theme.background.swiftUIColor)
+            .background(appearance.theme.background.swiftUIColor, ignoresSafeAreaEdges: .vertical)
         }
         .overlay { connectingOverlay }
         .overlay(alignment: .topTrailing) {
@@ -169,7 +169,7 @@ struct SessionPane: View {
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(appearance.theme.background.swiftUIColor)
+                .background(appearance.theme.background.swiftUIColor, ignoresSafeAreaEdges: .vertical)
                 .accessibilityElement(children: .combine)
             case .disconnected(let reason)
             where reason != .userInitiated && session.hostKeyMismatch == nil:
@@ -193,7 +193,7 @@ struct SessionPane: View {
                 }
                 .padding(24)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(appearance.theme.background.swiftUIColor)
+                .background(appearance.theme.background.swiftUIColor, ignoresSafeAreaEdges: .vertical)
             default:
                 EmptyView()
             }
