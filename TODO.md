@@ -173,3 +173,32 @@ Checks:
 - [ ] Unit tests in the kit for the model (an ordered host list, deleted hosts skipped, the saved layout mapped back from host ids to new sessions) and the schema snapshot.
 - [ ] UI tests: open each of the four ways, Open As from the context menu, Save as Workspace from a split tab and reopen it with the same layout, a command on open running in the right pane.
 - [ ] Help: a section on workspaces; the shortcut catalogue if they get shortcuts.
+
+## Replace SwiftTerm with libghostty for the terminal
+
+Render the terminal with libghostty, the terminal engine behind the Ghostty terminal, in place of SwiftTerm. Nothing has been looked into yet: start with a spike that answers the questions below, and only then decide whether to swap.
+
+Where things are now: SwiftTerm is pinned exactly in the kit (`Package.swift`, 1.99.0) and used only in `CerberusTerminal` (`TerminalSessionView.swift`, `TerminalAppearance.swift`, `TerminalContextMenu.swift`, `LogReplayView.swift`, `TerminalUITestSupport.swift`). Bytes come from the SSH channel through `TerminalTransport` (`CerberusSSHCore/TerminalTransport.swift`), so a swap stays inside `CerberusTerminal`.
+
+Find out first:
+
+- [ ] What libghostty offers today: its API, licence, how stable it is, and how it is built (Zig) and linked into a Swift package and a signed, notarised app.
+- [ ] That it can be fed bytes from our own SSH channel and send keystrokes back, with no local process or pty. The app must never start a local process (`Scripts/check-no-local-exec.sh`).
+- [ ] What it would give: speed, rendering quality (Metal), correctness of escape sequences, ligatures (SwiftTerm cannot join them), and accessibility (VoiceOver reading the screen).
+- [ ] What it would cost: build complexity, app size, and release risk.
+
+The spike:
+
+- [ ] A live session rendered by libghostty next to SwiftTerm, behind a debug switch, to compare by eye and with `Scripts/perf-gate.sh`.
+
+What would have to be rebuilt on it, if the answer is yes:
+
+- [ ] Themes (`TerminalAppearance`, including following the app's light or dark), font, size and cursor style.
+- [ ] Selection, copy (and copy on select), the paste confirmation for multi-line text and control characters, and OSC 52 clipboard writes (off by default).
+- [ ] Scrollback, Find in the terminal, ⌘-click links, and the context menu.
+- [ ] Broadcast input to several panes, split panes, and moving a pane to another tab or window with its screen.
+- [ ] Session recordings and log replay (`LogReplayView`).
+- [ ] The UI tests' hooks into the terminal (`TerminalUITestSupport`).
+- [ ] `THIRD_PARTY_NOTICES.md` and the README: remove SwiftTerm, add libghostty and anything it brings in.
+
+Not decided: whether to replace SwiftTerm at all depends on what the spike finds.
