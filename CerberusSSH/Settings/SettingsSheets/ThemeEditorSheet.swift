@@ -117,12 +117,13 @@ struct CustomThemesSection: View {
         var problems: [String] = []
         for url in panel.urls {
             do {
-                let theme = try ITermColors.theme(
+                // A preset with separate light and dark colours brings in both.
+                let themes = try ITermColors.themes(
                     from: Data(contentsOf: url),
                     name: url.deletingPathExtension().lastPathComponent
                 )
-                app.saveCustomTheme(theme)
-                imported += 1
+                for theme in themes { app.saveCustomTheme(theme) }
+                imported += themes.count
             } catch {
                 problems.append(
                     "\(url.lastPathComponent): \(error.localizedDescription)"

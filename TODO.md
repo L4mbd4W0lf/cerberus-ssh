@@ -89,8 +89,8 @@ What to do:
 
 Gaps in today's `.itermcolors` import, to fix while here:
 
-- [ ] The `(Dark)` / `(Light)` variants newer iTerm2 writes are ignored; only the plain keys are read.
-- [ ] "Calibrated" colours are read as sRGB, so they come out slightly off.
+- [x] The `(Dark)` / `(Light)` variants newer iTerm2 writes are ignored; only the plain keys are read. (A preset with separate colours now imports as two themes.)
+- [x] "Calibrated" colours are read as sRGB, so they come out slightly off. (Calibrated and P3 are now converted to sRGB.)
 - [ ] Bold, cursor text and link colours are dropped.
 
 ## Import hosts from other apps
